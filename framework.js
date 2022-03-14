@@ -37,6 +37,7 @@ register.forEach((notation,index)=>{
       })
       ,methods:{
          recalculate(){
+            if(!this.able(this.expr)) return;
             var res=[]
             ,nmax=this.$root.FS_shown[index]
             for(var n=0;n<=nmax;++n) res.push(n+':&nbsp;'+this.display(this.FS(this.expr,n)))
@@ -67,8 +68,8 @@ register.forEach((notation,index)=>{
             this.low[0] = newlow
          }
       }
-      ,template:`<li><span class="shown-item" @mouseover="recalculate()" @mousedown="expand()">{{display(expr)}}<span class="tooltip" v-if="able(expr)">
-            {{display(expr)}} fundamental sequence:
+      ,template:`<li><span class="shown-item" @mouseover="recalculate()" @mousedown="expand()"><span v-html="display(expr)"></span><span class="tooltip" v-if="able(expr)">
+            <span v-html="display(expr)"></span> fundamental sequence:
             <span v-for="term in shownFS"><br><span v-html="term"></span></span>
          </span></span>
          <ul>
