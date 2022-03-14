@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Notation Explorer</title>
+<link rel="stylesheet" type="text/css" href="index.css">
+<meta charset="UTF-8">
+<meta name="author" content="hyp_cos">
+</head><body><script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script>
+<script>var register=[];</script>
+<div id="app">
+   <div class="tab">
+      <button v-for="(tab,idx) in tab_names" @mousedown="current_tab=idx" :disabled="current_tab==idx">{{tab}}</button>
+   </div>
+   <div>
+      FS terms to show: <button @mousedown="decrFS(current_tab)">-</button> {{FS_shown[current_tab]}} <button @mousedown="incrFS(current_tab)">+</button>
+   </div>
+   <component :is="current_notation" :dataset="datasets[current_tab]"></component>
+</div>
+<script src="omega-Y.js"></script>
+<script src="framework.js"></script>
+</body>
+</html>

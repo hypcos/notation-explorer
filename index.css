@@ -1,0 +1,30 @@
+:focus{outline:none}
+.tooltip{
+   display: none;
+   background-color: #dfd;
+   position: absolute;
+   bottom: 105%;
+   left: 75%;
+   z-index: 1073741824;
+   padding: 2px 5px;
+   text-align: left;
+}
+:hover>.tooltip{display:inline-block}
+.shown-item{
+   position: relative;
+}
+.shown-item:hover{
+   background-color: #cff;
+}
+.tab>button{
+   background-color: #daf;
+   padding: 0 12px 4px;
+   border: 2px solid #90f;
+   border-radius: 20px;
+   font-size: 32px;
+   font-weight: bold;
+}
+.tab>[disabled]{
+   background-color: #60a;
+   color: #fff;
+}
