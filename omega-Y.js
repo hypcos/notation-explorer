@@ -212,5 +212,6 @@ register.push({
    ,init:()=>([
       {expr:[Infinity],low:[[1]],subitems:[]}
       ,{expr:[1],low:[[]],subitems:[]}
+      ,{expr:[],low:[[]],subitems:[]}
    ])
 })

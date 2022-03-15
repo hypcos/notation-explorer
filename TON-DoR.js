@@ -53,11 +53,8 @@ register.push({
          }
       }
       ,Copy = x=>typeof x==='number'?x:[Copy(x[0]),Copy(x[1]),-2]
-      var i,res
       if(''+term==='Infinity'){
-         res=0
-         for(i=0;i<n;++i) res=[0,res,-2]
-         return [-1,[-1,res,-2],-2]
+         term = [-1,0,-2]
       }
       var flag,c1,c3
       ,beta = Copy(term)
@@ -102,7 +99,7 @@ register.push({
       return beta
    }
    ,init:()=>[
-      {expr:Infinity,low:[[-1,-1,-2]],subitems:[]}
-      ,{expr:[-1,-1,-2],low:[-1],subitems:[]}
+      {expr:Infinity,low:[-1],subitems:[]}
+      ,{expr:-1,low:[-1],subitems:[]}
    ]
 })

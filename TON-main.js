@@ -114,5 +114,6 @@ register.push({
    ,init:()=>[
       {expr:Infinity,low:[0],subitems:[]}
       ,{expr:0,low:[-1],subitems:[]}
+      ,{expr:-1,low:[-1],subitems:[]}
    ]
 })
