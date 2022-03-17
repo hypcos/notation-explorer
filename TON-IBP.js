@@ -1,13 +1,28 @@
 //Encoding: -1 for '0', 0 for 'W', [b,a,-2] for C(a,b), x[1] for left part, x[0] for right part
-var IStd={}
+var IBPStd={}
 register.push({
-   id:'ton-i'
-   ,name:"Iteration of n-built from below (no passthrough)"
+   id:'ton-ibp'
+   ,name:"Iteration of n-built from below"
    ,able:TON_limit
    ,compare:TON_noraise_compare
    ,display:TON_noraise_display
    ,FS:(term,n)=>{
       var extract = (term,index)=>index.length?extract(term[index[0]],index.slice(1)):term
+      ,subterm_index = a=>{
+         var sow_subterms = (a,begin)=>{
+            result.push(begin.slice())
+            if(typeof a==='number') return;
+            var begin2=begin.slice()
+            begin.push(0)
+            sow_subterms(a[0],begin)
+            begin=begin2
+            begin.push(1)
+            sow_subterms(a[1],begin)
+         }
+         ,result=[]
+         sow_subterms(a,[])
+         return result
+      }
       ,smallindex = a=>{
          if(a===0) return []
          var sow_smallindex = (a,begin)=>{
@@ -28,7 +43,7 @@ register.push({
          return result
       }
       ,Copy = x=>typeof x==='number'?x:[Copy(x[0]),Copy(x[1]),-2]
-      ,get_n = (term,index)=>{//get n(a2=a'') from a1=a'
+      ,get_a2 = (term,index)=>{//get a2=a'' from a1=a'
          var subterm,i
          ,a=Copy(term)
          ,a1index=index.slice()
@@ -72,7 +87,9 @@ register.push({
             str1.shift()
             str2.shift()
          }
-         //step 7
+         return a2
+      }
+      ,get_n = a2=>{//get n value of the a''
          var n=0
          while(a2[a2.length-1]===-2) a2.pop()
          if(a2[a2.length-1]===-1){
@@ -87,18 +104,33 @@ register.push({
          }
          return n
       }
-      ,BuiltQ = (a,b,n,x)=>n ? TON_noraise_compare(x,0)<0&&BuiltQ(x,b,n-1,x)||(TON_noraise_compare(x,0)>=0||TON_noraise_compare(x,a)<=0)&&
-         (x===0||BuiltQ(a,b,n,x[0])&&BuiltQ(a,b,n,x[1]))
-         :TON_noraise_compare(a,b)<0
+      ,BuiltQ = (a,b,c,n)=>n ? subterm_index(a).every(x=>
+         TON_noraise_compare(extract(a,x),a)<=0||TON_noraise_compare(extract(a,x),0)>=0||BuiltQ(extract(a,x),b,c,n-1)||
+         x.some((e,yindex)=>{
+            var z
+            ,y=x.slice(0,yindex)
+            if(TON_noraise_compare(extract(a,y),0)>=0) return false
+            if(BuiltQ(extract(a,y),b,c,n-1)) return true
+            if(typeof extract(a,y)==='number') return false
+            if(TON_noraise_compare((extract(a,y))[1],c)>=0) return false
+            for(var zindex=x.length;zindex>=yindex;--zindex){
+               z=x.slice(0,zindex)
+               if(TON_noraise_compare(extract(a,z),extract(a,y))<0) return false
+            }
+            return true
+         })
+         ) : TON_noraise_compare(a,b)<0
       ,StandardQ = a=>{
          var str = JSON.stringify(a)
-         if(IStd[str]){
-            return IStd[str]
-         }else if(typeof a==='number' || (StandardQ(a[1])&&StandardQ(a[0]) && (typeof a[0]==='number'||TON_noraise_compare(a[1],a[0][1])<=0) &&
-         smallindex(a[1]).every(index=>BuiltQ(extract(a[1],index),a,get_n(a[1],index),extract(a[1],index))))){
-            return IStd[str]=true
+         if(IBPStd[str]){
+            return IBPStd[str]
          }else{
-            return false
+            var result = typeof a==='number' || (StandardQ(a[1])&&StandardQ(a[0]) && (typeof a[0]==='number'||TON_noraise_compare(a[1],a[0][1])<=0) &&
+            smallindex(a[1]).every(a1index=>{
+               var a2 = get_a2(a[1],a1index)
+               return BuiltQ(extract(a[1],a1index),a,a2,get_n(a2))
+            }))
+            return result?(IBPStd[str]=result):result
          }
       }
       if(''+term==='Infinity'){

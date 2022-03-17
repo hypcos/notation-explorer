@@ -1,25 +1,8 @@
 //Encoding: -1 for '0', 0 for 'W', [b,a,-2] for C(a,b), x[1] for left part, x[0] for right part
-;var TON_noraise_compare = (x,y)=>{
-   var comp = (a,b)=>{
-      if(a.length){
-         if(b.length){
-            if(a[0]>b[0]) return 1
-            else if(a[0]<b[0]) return -1
-            else return comp(a.slice(1),b.slice(1))
-         }else return 1
-      }else if(b.length){
-         return -1
-      }else return 0
-   }
-   return comp((''+x).split(',').map(e=>+e),(''+y).split(',').map(e=>+e))
-}
-,TON_noraise_display = term=>typeof term==='number'
-   ?term==Infinity?'Limit':term<0?'0':'Ω'
-   :TON_noraise_display(term[0])+TON_noraise_display(term[1])+'C'
-,DRStd={}
+var DRPStd={}
 register.push({
-   id:'ton-dr'
-   ,name:'Degrees of Reflection'
+   id:'ton-drp'
+   ,name:'Degrees of Reflection with Passthrough'
    ,able:TON_limit
    ,compare:TON_noraise_compare
    ,display:TON_noraise_display
@@ -38,16 +21,20 @@ register.push({
          sow_smallpart(term)
          return result
       }
-      ,BuiltQ = (a,b,x)=>TON_noraise_compare(x,0)<0
-         ?TON_noraise_compare(x,b)<0||TON_noraise_compare(x,a)<=0&&BuiltQ(a,b,x[0])&&BuiltQ(a,b,x[1])
-         :x===0||BuiltQ(a,b,x[0])&&BuiltQ(a,b,x[1])
+      ,BuiltQ = (a,ai,b,a0,d)=>{
+         if(a===0||TON_noraise_compare(a,b)<0) return true
+         if(d===-1&&TON_noraise_compare(a,0)<0&&TON_noraise_compare(a,ai)>0) return false
+         if(TON_noraise_compare(a,d)<0) return BuiltQ(a,ai,b,a0,-1)
+         if(d===-1&&TON_noraise_compare(a[0],0)<0&&TON_noraise_compare(a[1],a0)<0) return BuiltQ(a,ai,b,a0,a)
+         return BuiltQ(a[0],ai,b,a0,d)&&BuiltQ(a[1],ai,b,a0,d)
+      }
       ,StandardQ = a=>{
          var str = JSON.stringify(a)
-         if(DRStd[str]){
-            return DRStd[str]
+         if(DRPStd[str]){
+            return DRPStd[str]
          }else if(typeof a==='number' || (StandardQ(a[1])&&StandardQ(a[0]) && (typeof a[0]==='number'||TON_noraise_compare(a[1],a[0][1])<=0) &&
-         smallpart(a[1]).every(x=>BuiltQ(x,a,x)))){
-            return DRStd[str]=true
+         smallpart(a[1]).every(x=>BuiltQ(x,x,a,a[1],-1)))){
+            return DRPStd[str]=true
          }else{
             return false
          }
