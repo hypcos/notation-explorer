@@ -66,6 +66,7 @@ register.forEach((notation,index)=>{
             if(!this.able(this.expr)) return;
             var extraFS = this.$root.extra_FS[index]
             ,expand_at = (item,tier)=>{
+               if(!this.able(item.expr)) return;
                if(!tier) return;
                var working_expr = item.expr
                while(this.able(working_expr)){
