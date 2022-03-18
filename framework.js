@@ -9,12 +9,19 @@
 ,app = Vue.createApp({
    data:()=>({
       current_tab:0
-      ,FS_shown:register.map(()=>3)
+      ,FS_shown:register.map(()=>4)
+      ,extra_FS:register.map(()=>0)
+      ,tier:register.map(()=>1)
       ,datasets:register.map(notation=>notation.init())
    })
    ,computed:{
       current_notation(){return register[this.current_tab].id}
       ,tab_names:()=>register.map(notation=>notation.name)
+      ,tiername(){
+         var n=this.tier[this.current_tab]
+         if(0<=n&&n<=8) return ['small','single','double','triple','quadruple','quintuple','sextuple','septuple','octuple'][n]+' expansion'
+         return n+'-fold expansion'
+      }
    }
    ,methods:{
       incrFS(tab_index){
@@ -22,6 +29,18 @@
       }
       ,decrFS(tab_index){
          this.FS_shown.splice(tab_index,1,Math.max(this.FS_shown[tab_index]-1,0))
+      }
+      ,incr_extra(tab_index){
+         this.extra_FS.splice(tab_index,1,this.extra_FS[tab_index]+1)
+      }
+      ,decr_extra(tab_index){
+         this.extra_FS.splice(tab_index,1,Math.max(this.extra_FS[tab_index]-1,0))
+      }
+      ,incr_tier(tab_index){
+         this.tier.splice(tab_index,1,this.tier[tab_index]+1)
+      }
+      ,decr_tier(tab_index){
+         this.tier.splice(tab_index,1,Math.max(this.tier[tab_index]-1,0))
       }
    }
 })
@@ -45,27 +64,43 @@ register.forEach((notation,index)=>{
          }
          ,expand(){
             if(!this.able(this.expr)) return;
-            var working_expr = FSbounded(this.FS,this.compare,this.expr,this.low)
-            var newsub=[]
-            ,newlow = working_expr
-            this.subitems.unshift({
-               expr:JSON.parse(JSON.stringify(working_expr))
-               ,low:JSON.parse(JSON.stringify(this.low))
-               ,subitems:newsub
-            })
-            while(this.able(working_expr)){
-               working_expr = FSbounded(this.FS,this.compare,working_expr,this.low)
-               newsub.push({
-                  expr:JSON.parse(JSON.stringify(working_expr))
-                  ,low:JSON.parse(JSON.stringify(this.low))
+            var extraFS = this.$root.extra_FS[index]
+            ,expand_at = (item,tier)=>{
+               if(!tier) return;
+               var working_expr = item.expr
+               while(this.able(working_expr)){
+                  working_expr = FSbounded(this.FS,this.compare,working_expr,item.low)
+                  item.subitems.push({
+                     expr:working_expr
+                     ,low:JSON.parse(JSON.stringify(item.low))
+                     ,subitems:[]
+                  })
+               }
+               for(i=extraFS;i--;){
+                  working_expr = item.subitems[0].expr
+                  item.subitems.unshift({
+                     expr:FSbounded(this.FS,this.compare,item.expr,[working_expr])
+                     ,low:[]
+                     ,subitems:[]
+                  })
+               }
+               for(var i=item.subitems.length;i--;){
+                  if(i>0) item.subitems[i-1].low[0] = JSON.parse(JSON.stringify(item.subitems[i].expr))
+                  else item.low[0] = JSON.parse(JSON.stringify(item.subitems[0].expr))
+               }
+               item.subitems.slice(extraFS).forEach(subitem=>expand_at(subitem,tier-1))
+            }
+            var working_low = this.low
+            for(var i=extraFS;i>=0;--i){
+               this.subitems.unshift({
+                  expr:FSbounded(this.FS,this.compare,this.expr,working_low)
+                  ,low:JSON.parse(JSON.stringify(working_low))
                   ,subitems:[]
                })
+               working_low = [this.subitems[0].expr]
             }
-            for(var i=newsub.length;i--;){
-               if(i>0) newsub[i-1].low = [JSON.parse(JSON.stringify(newsub[i].expr))]
-               else this.subitems[0].low = [JSON.parse(JSON.stringify(newsub[0].expr))]
-            }
-            this.low[0] = newlow
+            this.low[0] = this.subitems[0].expr
+            expand_at(this.subitems[extraFS],this.$root.tier[index])
          }
       }
       ,template:`<li><span class="shown-item" @mouseover="recalculate()" @mousedown="expand()"><span v-html="display(expr)"></span><span class="tooltip" v-if="able(expr)">
