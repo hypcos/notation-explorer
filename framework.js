@@ -63,45 +63,37 @@ register.forEach((notation,index)=>{
             this.shownFS = res
          }
          ,expand(){
-            if(!this.able(this.expr)) return;
-            var extraFS = this.$root.extra_FS[index]
-            ,expand_at = (item,tier)=>{
-               if(!this.able(item.expr)) return;
-               if(!tier) return;
-               var working_expr = item.expr
-               while(this.able(working_expr)){
-                  working_expr = FSbounded(this.FS,this.compare,working_expr,item.low)
-                  item.subitems.push({
-                     expr:working_expr
-                     ,low:JSON.parse(JSON.stringify(item.low))
-                     ,subitems:[]
-                  })
-               }
-               for(i=extraFS;i--;){
-                  working_expr = item.subitems[0].expr
+            var expand_extra = item=>{
+               var working_low = item.low
+               for(var i=this.$root.extra_FS[index];i--;){
                   item.subitems.unshift({
-                     expr:FSbounded(this.FS,this.compare,item.expr,[working_expr])
-                     ,low:[]
+                     expr:FSbounded(this.FS,this.compare,item.expr,working_low)
+                     ,low:JSON.parse(JSON.stringify(working_low))
                      ,subitems:[]
                   })
+                  working_low = [item.subitems[0].expr]
                }
-               for(var i=item.subitems.length;i--;){
-                  if(i>0) item.subitems[i-1].low[0] = JSON.parse(JSON.stringify(item.subitems[i].expr))
-                  else item.low[0] = JSON.parse(JSON.stringify(item.subitems[0].expr))
-               }
-               item.subitems.slice(extraFS).forEach(subitem=>expand_at(subitem,tier-1))
+               if(item.subitems[0]) item.low[0] = item.subitems[0].expr
             }
-            var working_low = this.low
-            for(var i=extraFS;i>=0;--i){
-               this.subitems.unshift({
-                  expr:FSbounded(this.FS,this.compare,this.expr,working_low)
-                  ,low:JSON.parse(JSON.stringify(working_low))
+            ,expand_tier = (tier,item,append)=>{
+               if(!this.able(item.expr)) return;
+               var newitem={
+                  expr:FSbounded(this.FS,this.compare,item.expr,item.low)
+                  ,low:JSON.parse(JSON.stringify(item.low))
                   ,subitems:[]
-               })
-               working_low = [this.subitems[0].expr]
+               }
+               append.splice(append.map(x=>JSON.stringify(x.expr)).indexOf(JSON.stringify(item.expr))+1,0,newitem)
+               item.low[0] = newitem.expr
+               extras.add(item)
+               if(tier>0){
+                  expand_tier(tier,newitem,JSON.stringify(append[append.length-1].expr)===JSON.stringify(newitem.expr)?append:newitem.subitems)
+                  tier>1&&expand_tier(tier-1,newitem.subitems.length?newitem.subitems[newitem.subitems.length-1]:newitem,newitem.subitems)
+               }
             }
-            this.low[0] = this.subitems[0].expr
-            expand_at(this.subitems[extraFS],this.$root.tier[index])
+            ,extras=new Set()
+            ,parentsubs = this.$parent.subitems
+            expand_tier(this.$root.tier[index],this,JSON.stringify(parentsubs[parentsubs.length-1].expr)===JSON.stringify(this.expr)?parentsubs:this.subitems)
+            extras.forEach(expand_extra)
          }
       }
       ,template:`<li><span class="shown-item" @mouseover="recalculate()" @mousedown="expand()"><span v-html="display(expr)"></span><span class="tooltip" v-if="able(expr)">
@@ -114,8 +106,8 @@ register.forEach((notation,index)=>{
       </li>`
    })
    app.component(notation.id,{
-      props:['dataset']
-      ,template:`<ul><`+notation.id+`-list v-for="item in dataset" v-bind="item"></`+notation.id+`-list></ul>`
+      props:['subitems']
+      ,template:`<ul><`+notation.id+`-list v-for="item in subitems" v-bind="item"></`+notation.id+`-list></ul>`
    })
 })
 app.mount('#app')

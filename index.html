@@ -20,7 +20,7 @@
    <div>
       FS terms shown in tooltip: <button @mousedown="decrFS(current_tab)">-</button> {{FS_shown[current_tab]}} <button @mousedown="incrFS(current_tab)">+</button>
    </div>
-   <component :is="current_notation" :dataset="datasets[current_tab]"></component>
+   <component :is="current_notation" :subitems="datasets[current_tab]"></component>
 </div>
 <script src="omega-Y.js"></script>
 <script src="1-Y.js"></script>
