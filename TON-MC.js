@@ -1,45 +1,33 @@
 //Encoding: -1 for '0', n for 'W_n', [b,a,-2] for C(a,b), x[1] for left part, x[0] for right part
-;var raise = (term,sys)=>typeof term==='number'
-   ?term>=0&&term<sys?[-1,raise(term+1,sys),-2]:term
-   :[raise(term[0],sys),raise(term[1],sys),-2]
-,TON_compare = (x,y)=>{
-   var comp = (a,b)=>{
-      if(a.length){
-         if(b.length){
-            if(a[0]>b[0]) return 1
-            else if(a[0]<b[0]) return -1
-            else return comp(a.slice(1),b.slice(1))
-         }else return 1
-      }else if(b.length){
-         return -1
-      }else return 0
+//In reflection configuration, -0.5 for 'x'
+var r = (a,b)=>{
+   if(typeof a==='number') return a
+   if(TON_compare(a,b)>0){
+      if(TON_compare(a[0],b)>0){
+         return [r(a[0],b),r(a[1],b),-2]
+      }else{
+         return [-0.5,r(a[1],b),-2]
+      }
+   }else{
+      if(TON_compare(a,b)<0){
+         return a
+      }else{
+         return -0.5
+      }
    }
-   var sysx,sysy
-   ,tmpx = (''+x).split(',')
-   ,tmpy = (''+y).split(',')
-   sysx = Math.max(0,...tmpx)
-   sysy = Math.max(0,...tmpy)
-   if(sysx<Infinity&&sysy<Infinity&&(sysx>0||sysy>0)){
-      x=raise(x,Math.max(sysx,sysy))
-      y=raise(y,Math.max(sysx,sysy))
-   }
-   return comp((''+x).split(',').map(e=>+e),(''+y).split(',').map(e=>+e))
 }
-,StdTrue = {}
-,TON_main_display = term=>typeof term==='number'
-   ?term==Infinity?'Limit':term<0?'0':'Ω<sub>'+term+'</sub>'
-   :TON_main_display(term[0])+TON_main_display(term[1])+'C'
-,TON_limit = term=>typeof term==='number'?term>=0:typeof term[1]!=='number'||term[1]>=0
+,MCStd = {}
 register.push({
-   id:'ton-m'
-   ,name:"Taranosvky's ordinal notation"
+   id:'ton-mc'
+   ,name:"TON (reflection configuration) without passthrough"
    ,display:TON_main_display
    ,compare:TON_compare
    ,able:TON_limit
    ,FS:(term,n)=>{
       var mark = sys=>{
-         var res=[[-1,sys,-2],sys,-2]
-         for(var i=sys-1;i>0;i--) res = [-1,res,-2]
+         var res=sys
+         for(var i=sys;i>0;i--) res = [[-1,sys,-2],res,-2]
+         for(i=sys-1;i>0;i--) res = [-1,res,-2]
          return res
       }
       ,mark_FS = (sys,n)=>{
@@ -48,13 +36,48 @@ register.push({
          for(i=sys-1;i>0;i--) res = [-1,res,-2]
          return res
       }
-      ,BuiltQ = (n,b,a,x)=>n ? BuiltQ(n-1,b,x,x)||(TON_compare(x,a)<=0&&(typeof x==='number'?x>=0:BuiltQ(n,b,a,x[1])&&BuiltQ(n,b,a,x[0]))) : TON_compare(a,b)<0
+      ,extract = (term,index)=>index.length?extract(term[index[0]],index.slice(1)):term
+      ,subterm_index = a=>{
+         var sow_subterms = (a,begin)=>{
+            result.push(begin.slice())
+            if(typeof a==='number') return;
+            sow_subterms(a[0],begin.concat(0))
+            sow_subterms(a[1],begin.concat(1))
+         }
+         ,result=[]
+         sow_subterms(a,[])
+         return result
+      }
+      ,BuiltQ = (a,b,n)=>{
+         if(!(n>0)) return TON_compare(a,b)<0
+         var extractparent = x=>x.length?extract(a,x.slice(0,x.length-1)):b
+         ,refresh_totest = (d,e)=>{
+            if(typeof extract(a,d)==='number'||TON_compare(extract(a,d),extractparent(e))<0) return;
+            totest.push(d)
+            refresh_totest(d.concat(0),e)
+            refresh_totest(d.concat(1),e)
+         }
+         ,totest = []
+         return subterm_index(a).every(x=>{
+            if(TON_compare(r(extract(a,x),extractparent(x)),r(a,b))<=0) return true
+            if(x.some((t,zindex)=>TON_compare(extract(a,x.slice(0,zindex)),b)<0)) return true
+            totest = []
+            refresh_totest(x,x)
+            for(var y=x.slice();y.length>0;y.pop()){
+               if(x.slice(y.length).every((t,dz)=>TON_compare(extract(a,x.slice(0,y.length+dz)),extractparent(y))>=0)
+                  &&totest.every(z=>TON_compare(extract(a,z),extractparent(y))>=0)
+                  &&BuiltQ(extract(a,y),extractparent(y),n-1)
+               ) return true
+            }
+            return false
+         })
+      }
       ,StandardQ = (n,a)=>{
          var str = JSON.stringify(a)
-         if(StdTrue[str]){
-            return StdTrue[str]
-         }else if(typeof a==='number' || (StandardQ(n,a[1])&&StandardQ(n,a[0]) && (typeof a[0]==='number'||TON_compare(a[1],a[0][1])<=0) && BuiltQ(n,a,a[1],a[1]))){
-            return StdTrue[str]=true
+         if(MCStd[str]){
+            return MCStd[str]
+         }else if(typeof a==='number' || (StandardQ(n,a[1])&&StandardQ(n,a[0]) && (typeof a[0]==='number'||TON_compare(a[1],a[0][1])<=0) && BuiltQ(a[1],a,n))){
+            return MCStd[str]=true
          }else{
             return false
          }
