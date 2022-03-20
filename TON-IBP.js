@@ -12,12 +12,8 @@ register.push({
          var sow_subterms = (a,begin)=>{
             result.push(begin.slice())
             if(typeof a==='number') return;
-            var begin2=begin.slice()
-            begin.push(0)
-            sow_subterms(a[0],begin)
-            begin=begin2
-            begin.push(1)
-            sow_subterms(a[1],begin)
+            sow_subterms(a[0],begin.concat(0))
+            sow_subterms(a[1],begin.concat(1))
          }
          ,result=[]
          sow_subterms(a,[])
@@ -27,15 +23,11 @@ register.push({
          if(a===0) return []
          var sow_smallindex = (a,begin)=>{
             if(a===0) return;
-            var begin2=begin.slice()
             if(TON_noraise_compare(a,0)<0){
                result.push(begin)
             }else{
-               begin.push(0)
-               sow_smallindex(a[0],begin)
-               begin=begin2
-               begin.push(1)
-               sow_smallindex(a[1],begin)
+               sow_smallindex(a[0],begin.concat(0))
+               sow_smallindex(a[1],begin.concat(1))
             }
          }
          ,result=[]
