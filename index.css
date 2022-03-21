@@ -28,3 +28,6 @@
    background-color: #60a;
    color: #fff;
 }
+.nowrap{
+   white-space: nowrap;
+}

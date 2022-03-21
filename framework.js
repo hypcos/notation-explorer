@@ -107,7 +107,7 @@ register.forEach((notation,index)=>{
    })
    app.component(notation.id,{
       props:['subitems']
-      ,template:`<ul><`+notation.id+`-list v-for="item in subitems" v-bind="item"></`+notation.id+`-list></ul>`
+      ,template:`<ul class="nowrap"><`+notation.id+`-list v-for="item in subitems" v-bind="item"></`+notation.id+`-list></ul>`
    })
 })
 app.mount('#app')
