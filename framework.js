@@ -50,6 +50,7 @@ register.forEach((notation,index)=>{
       ,data:()=>({
          display:notation.display
          ,able:notation.able
+         ,semiable:notation.semiable
          ,compare:notation.compare
          ,FS:notation.FS
          ,shownFS:[]
@@ -76,7 +77,7 @@ register.forEach((notation,index)=>{
                if(item.subitems[0]) item.low[0] = item.subitems[0].expr
             }
             ,expand_tier = (tier,item,append)=>{
-               if(!this.able(item.expr)) return;
+               if(!(this.able(item.expr)||this.semiable&&this.semiable(item.expr)&&this.compare(this.FS(item.expr,0),item.low[0])>0)) return;
                var newitem={
                   expr:FSbounded(this.FS,this.compare,item.expr,item.low)
                   ,low:JSON.parse(JSON.stringify(item.low))
