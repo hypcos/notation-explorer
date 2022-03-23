@@ -12,13 +12,16 @@
       <button v-for="(tab,idx) in tab_names" @mousedown="current_tab=idx" :disabled="current_tab==idx">{{tab}}</button>
    </div>
    <div>
-      Expansion tier: <button @mousedown="decr_tier(current_tab)">-</button> {{tiername}} <button @mousedown="incr_tier(current_tab)">+</button>
+      Expansion tier: <button @mousedown="decr_tier()">-</button> {{tiername}} <button @mousedown="incr_tier()">+</button>
+      (Press 0~9 to select tier)
    </div>
    <div>
-      Extra FS terms when expand: <button @mousedown="decr_extra(current_tab)">-</button> {{extra_FS[current_tab]}} <button @mousedown="incr_extra(current_tab)">+</button>
+      Extra FS terms when expand: <button @mousedown="decr_extra()">-</button> {{extra_FS[current_tab]}} <button @mousedown="incr_extra()">+</button>
+      (Press "-" to decrease, and "+" to increase)
    </div>
    <div>
-      FS terms shown in tooltip: <button @mousedown="decrFS(current_tab)">-</button> {{FS_shown[current_tab]}} <button @mousedown="incrFS(current_tab)">+</button>
+      FS terms shown in tooltip: <button @mousedown="decrFS()">-</button> {{FS_shown[current_tab]}} <button @mousedown="incrFS()">+</button>
+      (Press "&lt;" to decrease, and "&gt;" to increase)
    </div>
    <component :is="current_notation" :subitems="datasets[current_tab]"></component>
 </div>

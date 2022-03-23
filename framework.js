@@ -24,23 +24,23 @@
       }
    }
    ,methods:{
-      incrFS(tab_index){
-         this.FS_shown.splice(tab_index,1,this.FS_shown[tab_index]+1)
+      incrFS(){
+         this.FS_shown.splice(this.current_tab,1,this.FS_shown[this.current_tab]+1)
       }
-      ,decrFS(tab_index){
-         this.FS_shown.splice(tab_index,1,Math.max(this.FS_shown[tab_index]-1,0))
+      ,decrFS(){
+         this.FS_shown.splice(this.current_tab,1,Math.max(this.FS_shown[this.current_tab]-1,0))
       }
-      ,incr_extra(tab_index){
-         this.extra_FS.splice(tab_index,1,this.extra_FS[tab_index]+1)
+      ,incr_extra(){
+         this.extra_FS.splice(this.current_tab,1,this.extra_FS[this.current_tab]+1)
       }
-      ,decr_extra(tab_index){
-         this.extra_FS.splice(tab_index,1,Math.max(this.extra_FS[tab_index]-1,0))
+      ,decr_extra(){
+         this.extra_FS.splice(this.current_tab,1,Math.max(this.extra_FS[this.current_tab]-1,0))
       }
-      ,incr_tier(tab_index){
-         this.tier.splice(tab_index,1,this.tier[tab_index]+1)
+      ,incr_tier(){
+         this.tier.splice(this.current_tab,1,this.tier[this.current_tab]+1)
       }
-      ,decr_tier(tab_index){
-         this.tier.splice(tab_index,1,Math.max(this.tier[tab_index]-1,0))
+      ,decr_tier(){
+         this.tier.splice(this.current_tab,1,Math.max(this.tier[this.current_tab]-1,0))
       }
    }
 })
@@ -111,4 +111,30 @@ register.forEach((notation,index)=>{
       ,template:`<ul class="nowrap"><`+notation.id+`-list v-for="item in subitems" v-bind="item"></`+notation.id+`-list></ul>`
    })
 })
-app.mount('#app')
+var root=app.mount('#app')
+window.addEventListener('keydown',e=>{
+   if(e.ctrlKey||e.altKey||e.shiftKey||e.metaKey) return;
+   var k=e.key
+   if(0<=k&&k<=9){
+      root.tier.splice(root.current_tab,1,+k)
+   }else{
+      switch(k){
+         case ',':
+         case '<':
+            root.decrFS()
+            break
+         case '.':
+         case '>':
+            root.incrFS()
+            break
+         case '-':
+         case '_':
+            root.decr_extra()
+            break
+         case '=':
+         case '+':
+            root.incr_extra()
+            break
+      }
+   }
+})
