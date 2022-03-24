@@ -1,6 +1,6 @@
 register.push({
-   id:'asan-3'
-   ,name:"aSAN-3"
+   id:'asan-tilde3plus'
+   ,name:"aSAN~3+"
    ,display:aSAN_display
    ,able:aSAN_able
    ,compare:aSAN_compare
@@ -44,37 +44,36 @@ register.push({
          return La
       }
       ,trans = L=>{
-         var n=L.length-1,Trans=0,Transcenders=[]
+         var n=L.length-1,Trans=0,Transcenders={}
          for(var k=1;k<=n;++k){
-            if(Trans){
-               if(aSAN_compare(L[n],L[k])>0) Trans=0
-            }else{
-               if(L[k-1][0]!==L[k]&&aSAN_compare(L[k-1],L[k])>0){
-                  Transcenders.push(k-1)
-                  Trans=1
-               }
+            if(!Trans&&L[k-1][0]!==L[k]){
+               Transcenders[k-1]=true
+               Trans=1
             }
+            if(Trans&&aSAN_compare(L[n],L[k])>0) Trans=0
          }
          return Transcenders
       }
       ,search = L=>{
-         var T=trans(L),n=L.length-1
-         for(var a=n;--a>=0&&aSAN_compare(L[n],L[a])<=0;);
-         var t=Math.max(...T)
-         if(t>=0&&t>=a){
-            for(var u=T.length;--u>=0&&!(aSAN_compare(L[t],L[T[u]])>0););
-            if(u>=0){
-               for(var v=T[u];v<=t;++v){
-                  if(aSAN_compare(L[v],L[t])>=0) return v
+         var T=trans(L)
+         ,k=L.length-1
+         ,N=L[k]
+         ,o=k,M=N,Trans=0
+         while(k--){
+            if(aSAN_compare(L[k],M)>0) o=k
+            if(!Trans){
+               if(T[k]){
+                  if(aSAN_compare(M,L[k])>0&&aSAN_compare(L[k],L[k+1])>0) return o
+                  o=k
+                  M=L[k]
+                  Trans=1
                }
-            }else{
-               return 0
+               if(N[1]===1&&k>0) continue
             }
-         }else if(a>=0){
-            return a+1
-         }else{
-            return 0
+            if(Trans&&!T[k]) continue
+            if(aSAN_compare(M,L[k])>0) return o
          }
+         return 0
       }
       ,Standard = A=>{
          if(typeof A==='number') return A

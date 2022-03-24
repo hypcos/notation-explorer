@@ -1,6 +1,25 @@
+;var aSAN_compare = (a,b)=>{
+   if(typeof a==='number'){
+      if(typeof b==='number') return a>b?1:a<b?-1:0
+      else a=[a]
+   }
+   if(typeof b==='number') b=[b]
+   if(a.length>b.length) return 1
+   if(a.length<b.length) return -1
+   var tmp,k
+   for(k=a.length;k--;){
+      tmp=aSAN_compare(a[k],b[k])
+      if(tmp!==0) return tmp
+   }
+   return 0
+}
+,aSAN_display = a=>typeof a==='number'?''+a:''+a==='1,Infinity'?'Limit':'('+a.map(aSAN_display).join()+')'
+,aSAN_base = A=>typeof A==='number'?A:aSAN_base(A[0])
+,aSAN_able = a=>typeof a!=='number'&&aSAN_base(a)===1
+,aSAN_semiable = a=>a!=1
 register.push({
-   id:'asan-3'
-   ,name:"aSAN-3"
+   id:'asan-1'
+   ,name:"Aarex's superstrong array notation (aSAN-1)"
    ,display:aSAN_display
    ,able:aSAN_able
    ,compare:aSAN_compare
@@ -43,38 +62,10 @@ register.push({
          La[x] = changeL(L,a+1,b)
          return La
       }
-      ,trans = L=>{
-         var n=L.length-1,Trans=0,Transcenders=[]
-         for(var k=1;k<=n;++k){
-            if(Trans){
-               if(aSAN_compare(L[n],L[k])>0) Trans=0
-            }else{
-               if(L[k-1][0]!==L[k]&&aSAN_compare(L[k-1],L[k])>0){
-                  Transcenders.push(k-1)
-                  Trans=1
-               }
-            }
-         }
-         return Transcenders
-      }
       ,search = L=>{
-         var T=trans(L),n=L.length-1
+         var n=L.length-1
          for(var a=n;--a>=0&&aSAN_compare(L[n],L[a])<=0;);
-         var t=Math.max(...T)
-         if(t>=0&&t>=a){
-            for(var u=T.length;--u>=0&&!(aSAN_compare(L[t],L[T[u]])>0););
-            if(u>=0){
-               for(var v=T[u];v<=t;++v){
-                  if(aSAN_compare(L[v],L[t])>=0) return v
-               }
-            }else{
-               return 0
-            }
-         }else if(a>=0){
-            return a+1
-         }else{
-            return 0
-         }
+         return a+1
       }
       ,Standard = A=>{
          if(typeof A==='number') return A

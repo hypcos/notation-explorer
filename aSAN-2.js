@@ -1,6 +1,6 @@
 register.push({
-   id:'asan-3'
-   ,name:"aSAN-3"
+   id:'asan-2'
+   ,name:"aSAN-2"
    ,display:aSAN_display
    ,able:aSAN_able
    ,compare:aSAN_compare
@@ -44,16 +44,9 @@ register.push({
          return La
       }
       ,trans = L=>{
-         var n=L.length-1,Trans=0,Transcenders=[]
+         var n=L.length-1,Transcenders=[]
          for(var k=1;k<=n;++k){
-            if(Trans){
-               if(aSAN_compare(L[n],L[k])>0) Trans=0
-            }else{
-               if(L[k-1][0]!==L[k]&&aSAN_compare(L[k-1],L[k])>0){
-                  Transcenders.push(k-1)
-                  Trans=1
-               }
-            }
+            if(L[k-1][0]!==L[k]&&aSAN_compare(L[k-1],L[k])>0) Transcenders.push(k-1)
          }
          return Transcenders
       }
