@@ -11,6 +11,7 @@
    <div class="tab">
       <button v-for="(tab,idx) in tab_names" @mousedown="current_tab=idx" :disabled="current_tab==idx">{{tab}}</button>
    </div>
+   <button @mousedown="reset_list()">Reset the list</button>
    <div>
       Expansion tier: <button @mousedown="decr_tier()">-</button> {{tiername}} <button @mousedown="incr_tier()">+</button>
       (Press 0~9 to select tier)

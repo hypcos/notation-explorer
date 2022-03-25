@@ -42,6 +42,9 @@
       ,decr_tier(){
          this.tier.splice(this.current_tab,1,Math.max(this.tier[this.current_tab]-1,0))
       }
+      ,reset_list(){
+         this.datasets.splice(this.current_tab,1,register[this.current_tab].init())
+      }
    }
 })
 register.forEach((notation,index)=>{
