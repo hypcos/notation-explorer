@@ -54,41 +54,41 @@ register.push({
          }
       }
       ,Copy = x=>typeof x==='number'?x:[Copy(x[0]),Copy(x[1]),-2]
-      ,TON = (term,n)=>{
-         if(''+term==='Infinity'){
-            term = [-1,0,-2]
-         }
-         var flag,c1,c3
+      ,TON = function*(term){
+         var flag=true,c1,c3
+         ,n=0
          ,beta = Copy(term)
-         ,lim = (''+term).split(',').length + n*2
-         do{
-            flag=false;
-            if(typeof beta==='number'&&beta>=0){					   //gamma = 'W', m = 0, assuming beta != '0'
-               beta=-1
-            }else if(beta[1]===-1){		                           //gamma = '0', m = 1
-               beta=beta[0]
-               flag=true
-               continue
-            }else if(typeof beta[1]==='number'&&beta[1]>=0){		//gamma = 'W', m = 1
-               beta[1]=-1
-            }else if(beta[1][1]===-1){                            //gamma = '0', m = 2
-               beta=[[beta[0],beta[1][0],-2],0,-2]
-            }else if(typeof beta[1][1]==='number'&&beta[1][1]>=0){//gamma = 'W', m = 2
-               beta[1][1]=-1
-            }else{							                           //m > 2, the main part of step 1 and 2
-               c3=beta
-               c1=beta[1][1]
-               while(typeof c1[1]!=='number'){
-                  c3=c3[1]
-                  c1=c1[1]
-               }
-               if(c1[1]===-1){                                    //gamma = '0', m > 2
-                  c3[1]=[[c3[1][0],c1[0],-2],0,-2]
-               }else{							                        //gamma = 'W', m > 2
-                  c1[1]=-1
+         ,len = (''+term).split(',').length
+         mainloop:while(true){
+            if(flag){
+               if(typeof beta==='number'&&beta>=0){					   //gamma = 'W', m = 0, assuming beta != '0'
+                  beta=-1
+               }else if(beta[1]===-1){		                           //gamma = '0', m = 1
+                  beta=beta[0]
+                  continue
+               }else if(typeof beta[1]==='number'&&beta[1]>=0){		//gamma = 'W', m = 1
+                  beta[1]=-1
+               }else if(beta[1][1]===-1){                            //gamma = '0', m = 2
+                  beta=[[beta[0],beta[1][0],-2],0,-2]
+               }else if(typeof beta[1][1]==='number'&&beta[1][1]>=0){//gamma = 'W', m = 2
+                  beta[1][1]=-1
+               }else{							                           //m > 2, the main part of step 1 and 2
+                  c3=beta
+                  c1=beta[1][1]
+                  while(typeof c1[1]!=='number'){
+                     c3=c3[1]
+                     c1=c1[1]
+                  }
+                  if(c1[1]===-1){                                    //gamma = '0', m > 2
+                     c3[1]=[[c3[1][0],c1[0],-2],0,-2]
+                  }else{							                        //gamma = 'W', m > 2
+                     c1[1]=-1
+                  }
                }
             }
-            while((''+beta).split(',').length<lim&&StandardQ(beta)){//better step 3
+            flag=true
+            while((''+beta).split(',').length<len+n*2){//better step 3
+               if(!StandardQ(beta)) continue mainloop
                if(typeof beta!=='number'){
                   c1=beta
                   while(typeof c1[1]!=='number')c1=c1[1]		      //step 4
@@ -97,14 +97,25 @@ register.push({
                   beta=[beta,0,-2]										//step 4 and 5 for beta = '0' and 'W'
                }
             }
-         }while(flag||!StandardQ(beta));
-         return beta
+            if(StandardQ(beta)){
+               n = yield Copy(beta)
+               flag=false
+            }
+         }
       }
-      return (term,FSterm)=>{
+      return (term,n)=>{
+         if(''+term==='Infinity'){
+            term = [-1,0,-2]
+         }
          var datakey=''+term
-         if(!data[datakey]) data[datakey] = []
-         else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
-         return data[datakey][FSterm] = TON(term,FSterm)
+         ,dataterm = data[datakey]
+         if(!dataterm){
+            dataterm = (data[datakey] = [])
+            dataterm.gen = TON(term)
+            dataterm[0] = dataterm.gen.next().value
+         }
+         if(dataterm[n]!==undefined) return dataterm[n]
+         return dataterm[n] = dataterm.gen.next(n).value
       }
    })()
    ,init:()=>[

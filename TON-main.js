@@ -62,7 +62,61 @@ register.push({
       }
       ,Copy = x=>typeof x==='number'?x:[Copy(x[0]),Copy(x[1]),-2]
       ,regress = x=>typeof x==='number'?x:(x[0]===-1&&x[1]>0?x[1]-1:[regress(x[0]),regress(x[1]),-2])
-      ,TON = (term,n)=>{
+      ,regress_repeated = x=>{
+         var x1
+         while(''+(x1=regress(x))!=''+x) x=x1
+         return x1
+      }
+      ,TON = function*(term,sys){
+         var flag=true,c1,c3
+         ,n=0
+         ,beta = Copy(term)
+         ,len = (''+term).split(',').length
+         mainloop:while(true){
+            if(flag){
+               if(typeof beta==='number'&&beta>=0){					   //gamma = 'W', m = 0, assuming beta != '0'
+                  beta=-1
+               }else if(beta[1]===-1){		                           //gamma = '0', m = 1
+                  beta=beta[0]
+                  continue
+               }else if(typeof beta[1]==='number'&&beta[1]>=0){		//gamma = 'W', m = 1
+                  beta[1]=-1
+               }else if(beta[1][1]===-1){                            //gamma = '0', m = 2
+                  beta=[[beta[0],beta[1][0],-2],sys,-2]
+               }else if(typeof beta[1][1]==='number'&&beta[1][1]>=0){//gamma = 'W', m = 2
+                  beta[1][1]=-1
+               }else{							                           //m > 2, the main part of step 1 and 2
+                  c3=beta
+                  c1=beta[1][1]
+                  while(typeof c1[1]!=='number'){
+                     c3=c3[1]
+                     c1=c1[1]
+                  }
+                  if(c1[1]===-1){                                    //gamma = '0', m > 2
+                     c3[1]=[[c3[1][0],c1[0],-2],sys,-2]
+                  }else{							                        //gamma = 'W', m > 2
+                     c1[1]=-1
+                  }
+               }
+            }
+            flag=true
+            while((''+beta).split(',').length<len+n*2){//better step 3
+               if(!StandardQ(sys,beta)) continue mainloop
+               if(typeof beta!=='number'){
+                  c1=beta
+                  while(typeof c1[1]!=='number')c1=c1[1]		      //step 4
+                  c1[1]=[c1[1],sys,-2]									   //step 5
+               }else{
+                  beta=[beta,sys,-2]										//step 4 and 5 for beta = '0' and 'W'
+               }
+            }
+            if(StandardQ(sys,beta)){
+               n = yield regress_repeated(beta)
+               flag=false
+            }
+         }
+      }
+      return (term,n)=>{
          var i,res
          ,sys = typeof term==='number'?term:Math.max(0,...((''+term).split(',')))
          if(sys==Infinity){
@@ -72,55 +126,15 @@ register.push({
          }
          term = raise(term,sys)
          if(sys>=1&&''+term===''+mark(sys)) return mark_FS(sys,n)
-         var flag,c1,c3
-         ,beta = Copy(term)
-         ,lim = (''+term).split(',').length + n*2
-         do{
-            flag=false;
-            if(typeof beta==='number'&&beta>=0){					   //gamma = 'W', m = 0, assuming beta != '0'
-               beta=-1
-            }else if(beta[1]===-1){		                           //gamma = '0', m = 1
-               beta=beta[0]
-               flag=true
-               continue
-            }else if(typeof beta[1]==='number'&&beta[1]>=0){		//gamma = 'W', m = 1
-               beta[1]=-1
-            }else if(beta[1][1]===-1){                            //gamma = '0', m = 2
-               beta=[[beta[0],beta[1][0],-2],sys,-2]
-            }else if(typeof beta[1][1]==='number'&&beta[1][1]>=0){//gamma = 'W', m = 2
-               beta[1][1]=-1
-            }else{							                           //m > 2, the main part of step 1 and 2
-               c3=beta
-               c1=beta[1][1]
-               while(typeof c1[1]!=='number'){
-                  c3=c3[1]
-                  c1=c1[1]
-               }
-               if(c1[1]===-1){                                    //gamma = '0', m > 2
-                  c3[1]=[[c3[1][0],c1[0],-2],sys,-2]
-               }else{							                        //gamma = 'W', m > 2
-                  c1[1]=-1
-               }
-            }
-            while((''+beta).split(',').length<lim&&StandardQ(sys,beta)){//better step 3
-               if(typeof beta!=='number'){
-                  c1=beta
-                  while(typeof c1[1]!=='number')c1=c1[1]		      //step 4
-                  c1[1]=[c1[1],sys,-2]									   //step 5
-               }else{
-                  beta=[beta,sys,-2]										//step 4 and 5 for beta = '0' and 'W'
-               }
-            }
-         }while(flag||!StandardQ(sys,beta));
-         var beta1
-         while(''+(beta1=regress(beta))!=''+beta) beta=beta1
-         return beta1
-      }
-      return (term,FSterm)=>{
          var datakey=''+term
-         if(!data[datakey]) data[datakey] = []
-         else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
-         return data[datakey][FSterm] = TON(term,FSterm)
+         ,dataterm = data[datakey]
+         if(!dataterm){
+            dataterm = (data[datakey] = [])
+            dataterm.gen = TON(term,sys)
+            dataterm[0] = dataterm.gen.next().value
+         }
+         if(dataterm[n]!==undefined) return dataterm[n]
+         return dataterm[n] = dataterm.gen.next(n).value
       }
    })()
    ,init:()=>[
