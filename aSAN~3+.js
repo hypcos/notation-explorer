@@ -4,8 +4,9 @@ register.push({
    ,display:aSAN_display
    ,able:aSAN_able
    ,compare:aSAN_compare
-   ,FS:(A,FSterm)=>{
-      var Copy = a=>typeof a==='number'?a:a.map(Copy)
+   ,FS:(()=>{
+      var data={}
+      ,Copy = a=>typeof a==='number'?a:a.map(Copy)
       ,pilot = A=>{
          if(typeof A==='number') return A
          for(var b=0;b<A.length;++b){
@@ -84,23 +85,31 @@ register.push({
          if(A[A.length-1]===1) return Standard(A.slice(0,A.length-1))
          return A.map(Standard)
       }
-      if(''+A==='1,Infinity') return FSterm?Array(FSterm).fill(1).concat(2):2
-      if(aSAN_base(A)>1) return pre(A)
-      var L=layers(Copy(A))
-      ,m=search(L)
-      ,f=n=>changeL(L,m,n)
-      ,result = FSterm+1//0 should not occur in aSAN expressions
-      for(var n=FSterm;n--;){
-         result = f(result)
+      ,aSAN = (A,FSterm)=>{
+         var L=layers(Copy(A))
+         ,m=search(L)
+         ,f=n=>changeL(L,m,n)
+         ,result = FSterm+1//0 should not occur in aSAN expressions
+         for(var n=FSterm;n--;){
+            result = f(result)
+         }
+         if(m>0){
+            L[m-1][L[m-1].indexOf(L[m])] = result
+            result = L[0]
+         }
+         var std
+         while(JSON.stringify(std=Standard(result))!==JSON.stringify(result)) result=std
+         return result
       }
-      if(m>0){
-         L[m-1][L[m-1].indexOf(L[m])] = result
-         result = L[0]
+      return (A,FSterm)=>{
+         if(''+A==='1,Infinity') return FSterm?Array(FSterm).fill(1).concat(2):2
+         if(aSAN_base(A)>1) return pre(A)
+         var datakey=aSAN_display(A)
+         if(!data[datakey]) data[datakey] = []
+         else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
+         return data[datakey][FSterm] = aSAN(A,FSterm)
       }
-      var std
-      while(JSON.stringify(std=Standard(result))!==JSON.stringify(result)) result=std
-      return result
-   }
+   })()
    ,init:()=>([
       {expr:[1,Infinity],low:[1],subitems:[]}
       ,{expr:1,low:[1],subitems:[]}

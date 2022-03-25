@@ -19,8 +19,9 @@ register.push({
    ,display:sequence_display
    ,able:Y_limit
    ,compare:sequence_compare
-   ,FS:(seq,FSterm)=>{
-      var from_sequence = seq=>{
+   ,FS:(()=>{
+      var data={}
+      ,from_sequence = seq=>{
          var bottom,phantom,i,mountain=[]
          for(i=0;i<seq.length;++i){
             bottom={value:seq[i],x:i,y:[1],leftleg_up:[]}
@@ -150,65 +151,73 @@ register.push({
          }
          mountain[source_entry.x+x_offset].push(newentry)
       }
-      if(!seq.length) return []
-      if(''+seq==='Infinity') return [1,1+FSterm]
-      if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
-      var mountain = draw_mountain(from_sequence(seq))
-      var child = mountain[mountain.length-1]
-      var BR = child[0].leftleg_down
-      var width=mountain.length-1-BR.x
-      ,top=mountain[BR.x]
-      top = top.slice(top.findIndex(entry=>entry===BR),top.length-1)
-      top.unshift(child[0])
-      var s=seq.slice()
-      --s[s.length-1]
-      mountain = draw_mountain(from_sequence(s))
-      BR = mountain[BR.x].find(entry=>same_row(entry,BR))//restore in the new mountain
-      var magma_entries=[]
-      for(var BR1=BR;true;BR1=BR1.rightleg_down){
-         collect(BR1).forEach(entry=>{
-            var dx=entry.x-BR.x
-            if(magma_entries[dx]===undefined) magma_entries[dx]=[]
-            magma_entries[dx].push(entry)
-         })
-         if(!BR1.y.length) break
-      }
-      for(var n=1;n<=FSterm;++n){
-         var ref = top.map(topentry=>mountain[mountain.length-1].find(entry=>vertical_compare(entry,topentry)<0))
-         for(var dx=1;dx<=width;++dx){
-            var column=[]
-            mountain[BR.x+n*width+dx]=column
-            magma_entries[dx].forEach(magma_entry=>{
-               copy_single_edge(mountain,magma_entry,n*width,BR.x)
-               var source_entry = magma_entry
-               ,targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
-               while(!(source_entry.value<=1||magma_entries[dx].includes(source_entry.rightleg_up))){
-                  targety = vertical_increase(targety,dimension_difference(source_entry.y,source_entry.rightleg_up.y))
-                  source_entry = source_entry.rightleg_up
-                  copy_single_edge(mountain,source_entry,n*width,BR.x,targety)
-               }
-               if(!magma_entry.y.length) return;
-               targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
-               var leftlegx = magma_entry.leftleg_down.x+n*width//strong magma
-               mountain[leftlegx].filter(
-                  entry=>vertical_compare(magma_entry,entry)<=0&&vertical_compare(entry,targety)<0
-               ).forEach(
-                  leftleg_entry=>fill_magma_edge(mountain,magma_entry,leftleg_entry)
-               )
+      ,omega_Y_limit = (seq,FSterm)=>{
+         var mountain = draw_mountain(from_sequence(seq))
+         ,child = mountain[mountain.length-1]
+         ,BR = child[0].leftleg_down
+         ,width=mountain.length-1-BR.x
+         ,top=mountain[BR.x]
+         top = top.slice(top.findIndex(entry=>entry===BR),top.length-1)
+         top.unshift(child[0])
+         var s=seq.slice()
+         --s[s.length-1]
+         mountain = draw_mountain(from_sequence(s))
+         BR = mountain[BR.x].find(entry=>same_row(entry,BR))//restore in the new mountain
+         var magma_entries=[]
+         for(var BR1=BR;true;BR1=BR1.rightleg_down){
+            collect(BR1).forEach(entry=>{
+               var dx=entry.x-BR.x
+               if(magma_entries[dx]===undefined) magma_entries[dx]=[]
+               magma_entries[dx].push(entry)
             })
-            column.sort((entry1,entry2)=>-vertical_compare(entry1,entry2))
-            for(var i=0;i<column.length-1;++i){
-               column[i].rightleg_down = column[i+1]
-               column[i+1].rightleg_up = column[i]
-            }
-            column[0].value = 1
-            column.slice(1,column.length-1).forEach(entry=>entry.value=entry.rightleg_up.value+entry.rightleg_up.leftleg_down.value)
+            if(!BR1.y.length) break
          }
+         for(var n=1;n<=FSterm;++n){
+            var ref = top.map(topentry=>mountain[mountain.length-1].find(entry=>vertical_compare(entry,topentry)<0))
+            for(var dx=1;dx<=width;++dx){
+               var column=[]
+               mountain[BR.x+n*width+dx]=column
+               magma_entries[dx].forEach(magma_entry=>{
+                  copy_single_edge(mountain,magma_entry,n*width,BR.x)
+                  var source_entry = magma_entry
+                  ,targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
+                  while(!(source_entry.value<=1||magma_entries[dx].includes(source_entry.rightleg_up))){
+                     targety = vertical_increase(targety,dimension_difference(source_entry.y,source_entry.rightleg_up.y))
+                     source_entry = source_entry.rightleg_up
+                     copy_single_edge(mountain,source_entry,n*width,BR.x,targety)
+                  }
+                  if(!magma_entry.y.length) return;
+                  targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
+                  var leftlegx = magma_entry.leftleg_down.x+n*width//strong magma
+                  mountain[leftlegx].filter(
+                     entry=>vertical_compare(magma_entry,entry)<=0&&vertical_compare(entry,targety)<0
+                  ).forEach(
+                     leftleg_entry=>fill_magma_edge(mountain,magma_entry,leftleg_entry)
+                  )
+               })
+               column.sort((entry1,entry2)=>-vertical_compare(entry1,entry2))
+               for(var i=0;i<column.length-1;++i){
+                  column[i].rightleg_down = column[i+1]
+                  column[i+1].rightleg_up = column[i]
+               }
+               column[0].value = 1
+               column.slice(1,column.length-1).forEach(entry=>entry.value=entry.rightleg_up.value+entry.rightleg_up.leftleg_down.value)
+            }
+         }
+         s=to_sequence(mountain)
+         s.pop()
+         return s
       }
-      s=to_sequence(mountain)
-      s.pop()
-      return s
-   }
+      return (seq,FSterm)=>{
+         if(!seq.length) return []
+         var datakey=''+seq
+         if(datakey==='Infinity') return [1,1+FSterm]
+         if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
+         if(!data[datakey]) data[datakey] = []
+         else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
+         return data[datakey][FSterm] = omega_Y_limit(seq,FSterm)
+      }
+   })()
    ,init:()=>([
       {expr:[Infinity],low:[[1]],subitems:[]}
       ,{expr:[1],low:[[]],subitems:[]}
