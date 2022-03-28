@@ -88,7 +88,7 @@ register.forEach((notation,index)=>{
                if(item.subitems[0]) item.low[0] = item.subitems[0].expr
             }
             ,expand_tier = (tier,item,append)=>{
-               if(!(this.able(item.expr)||this.semiable&&this.semiable(item.expr)&&this.compare(this.FS(item.expr,0),item.low[0])>0)) return;
+               if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(this.FS(item.expr,0),item.low[0])>0)) return;
                var newitem={
                   expr:FSbounded(this.FS,this.compare,item.expr,item.low)
                   ,low:JSON.parse(JSON.stringify(item.low))
@@ -96,7 +96,6 @@ register.forEach((notation,index)=>{
                }
                append.splice(append.map(x=>JSON.stringify(x.expr)).indexOf(JSON.stringify(item.expr))+1,0,newitem)
                item.low[0] = newitem.expr
-               extras.add(item)
                if(tier>0){
                   expand_tier(tier,newitem,JSON.stringify(append[append.length-1].expr)===JSON.stringify(newitem.expr)?append:newitem.subitems)
                   tier>1&&expand_tier(tier-1,newitem.subitems.length?newitem.subitems[newitem.subitems.length-1]:newitem,newitem.subitems)
