@@ -57,14 +57,22 @@ register.forEach((notation,index)=>{
          ,compare:notation.compare
          ,FS:notation.FS
          ,shownFS:[]
+         ,tooltip:false
+         ,tooltipX:{}
       })
       ,methods:{
-         recalculate(){
+         recalculate(event){
             if(!this.able(this.expr)) return;
             var res=[]
             ,nmax=this.$root.FS_shown[index]
             for(var n=0;n<=nmax;++n) res.push(n+':&nbsp;'+this.display(this.FS(this.expr,n)))
             this.shownFS = res
+            this.tooltipX = {left:(event.offsetX+15)+'px'}
+            this.tooltip = true
+         }
+         ,unshow(){
+            if(!this.able(this.expr)) return;
+            this.tooltip = false
          }
          ,expand(){
             var expand_extra = item=>{
@@ -100,10 +108,11 @@ register.forEach((notation,index)=>{
             extras.forEach(expand_extra)
          }
       }
-      ,template:`<li><span class="shown-item" @mouseover="recalculate()" @mousedown="expand()"><span v-html="display(expr)"></span><span class="tooltip" v-if="able(expr)">
+      ,template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()" @mousedown="expand()"><span v-html="display(expr)"></span>
+            <div class="tooltip" v-if="tooltip" :style="tooltipX" @mousedown.stop>
             <span v-html="display(expr)"></span> fundamental sequence:
-            <span v-for="term in shownFS"><br><span v-html="term"></span></span>
-         </span></span>
+            <div v-for="term in shownFS" v-html="term"></div>
+         </div></div>
          <ul>
             <`+notation.id+`-list v-for="subitem in subitems" v-bind="subitem"></`+notation.id+`-list>
          </ul>
