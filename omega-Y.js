@@ -39,8 +39,6 @@ register.push({
       }
       ,to_sequence = mountain=>mountain.map(column=>column[column.length-2].value)
       ,vertical_compare = (a,b)=>{
-         if(a.leftleg_up) return vertical_compare(a.y,b)
-         if(b.leftleg_up) return vertical_compare(a,b.y)
          if(a.length>b.length) return 1
          if(a.length<b.length) return -1
          for(var i=a.length;i--;){
@@ -49,9 +47,8 @@ register.push({
          }
          return 0
       }
-      ,same_row = (entry1,entry2)=>vertical_compare(entry1.y,entry2.y)===0
+      ,same_row = (entry1,entry2)=>!vertical_compare(entry1.y,entry2.y)
       ,vertical_increase = (y,d)=>{//go from y=[r0,r1,r2,...,r(d-1),rd #] to [0,0,0,...,0,rd+1 #]
-         if(y.leftleg_up) return vertical_increase(y.y,d)
          var c=y.slice()
          c[d]===undefined?(c[d]=1):(c[d]+=1)
          c.fill(0,0,d)
@@ -85,7 +82,7 @@ register.push({
                if(entry.value===1) return;
                for(parent=entry;true;){
                   up=parent.leftleg_down
-                  while(up.rightleg_up&& vertical_compare(up.rightleg_up,parent)<=0) up=up.rightleg_up
+                  while(up.rightleg_up&& vertical_compare(up.rightleg_up.y,parent.y)<=0) up=up.rightleg_up
                   parent=up
                   if(parent.value<entry.value) break
                }
@@ -93,6 +90,41 @@ register.push({
             }
          })
          return mountain
+      }
+      ,find_lower = (column,y)=>{
+         var i1=0,i2=column.length-1,i
+         while(i1<i2){
+            i=Math.floor((i1+i2)/2)
+            if(vertical_compare(column[i].y,y)<0) i2=i
+            else i1=i+1
+         }
+         return column[i2]
+      }
+      ,find_higherequal = (column,y)=>{
+         var i1=0,i2=column.length-1,i
+         while(i1<i2){
+            i=Math.ceil((i1+i2)/2)
+            if(vertical_compare(column[i].y,y)>=0) i1=i
+            else i2=i-1
+         }
+         return column[i1]
+      }
+      ,yslice = (column,lowequal,high)=>{
+         var i1,i2,i
+         i1=0,i2=column.length-1
+         while(i1<i2){
+            i=Math.floor((i1+i2)/2)
+            if(vertical_compare(column[i].y,high)<0) i2=i
+            else i1=i+1
+         }
+         var start=i2
+         i1=start,i2=column.length-1
+         while(i1<i2){
+            i=Math.floor((i1+i2)/2)
+            if(vertical_compare(column[i].y,lowequal)<0) i2=i
+            else i1=i+1
+         }
+         return column.slice(start,i2)
       }
       ,collect_usual = (working_entry,collection=[])=>{
          working_entry.leftleg_up.forEach(e=>{
@@ -124,7 +156,7 @@ register.push({
          for(d=dimension_difference(leftleg_entry.y,leftleg_entry.rightleg_up.y);d>=0;--d){
             newentry={
                x:targetx
-               ,y:vertical_increase(leftleg_entry,d)
+               ,y:vertical_increase(leftleg_entry.y,d)
                ,leftleg_up:[]
             }
             newentry.leftleg_down = leftleg_entry
@@ -142,7 +174,7 @@ register.push({
          }
          if(source_entry.y.length>0){//underground doesn't have this
             if(source_entry.leftleg_down.x>=BR_x){//ascend
-               leftleg_entry = mountain[source_entry.leftleg_down.x+x_offset].find(entry=>vertical_compare(entry,newentry)<0)
+               leftleg_entry = find_lower(mountain[source_entry.leftleg_down.x+x_offset],newentry.y)
             }else{//not ascend
                leftleg_entry = source_entry.leftleg_down
             }
@@ -173,29 +205,27 @@ register.push({
             if(!BR1.y.length) break
          }
          for(var n=1;n<=FSterm;++n){
-            var ref = top.map(topentry=>mountain[mountain.length-1].find(entry=>vertical_compare(entry,topentry)<0))
+            var ref = top.map(topentry=>find_lower(mountain[mountain.length-1],topentry.y))
             for(var dx=1;dx<=width;++dx){
                var column=[]
                mountain[BR.x+n*width+dx]=column
                magma_entries[dx].forEach(magma_entry=>{
                   copy_single_edge(mountain,magma_entry,n*width,BR.x)
                   var source_entry = magma_entry
-                  ,targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
+                  ,targety = find_higherequal(ref,magma_entry.y).y
+                  ,targety0 = targety
                   while(!(source_entry.value<=1||magma_entries[dx].includes(source_entry.rightleg_up))){
                      targety = vertical_increase(targety,dimension_difference(source_entry.y,source_entry.rightleg_up.y))
                      source_entry = source_entry.rightleg_up
                      copy_single_edge(mountain,source_entry,n*width,BR.x,targety)
                   }
                   if(!magma_entry.y.length) return;
-                  targety = ref.slice().reverse().find(refentry=>vertical_compare(magma_entry,refentry)<=0).y
                   var leftlegx = magma_entry.leftleg_down.x+n*width//strong magma
-                  mountain[leftlegx].filter(
-                     entry=>vertical_compare(magma_entry,entry)<=0&&vertical_compare(entry,targety)<0
-                  ).forEach(
+                  yslice(mountain[leftlegx],magma_entry.y,targety0).forEach(
                      leftleg_entry=>fill_magma_edge(mountain,magma_entry,leftleg_entry)
                   )
                })
-               column.sort((entry1,entry2)=>-vertical_compare(entry1,entry2))
+               column.sort((entry1,entry2)=>-vertical_compare(entry1.y,entry2.y))
                for(var i=0;i<column.length-1;++i){
                   column[i].rightleg_down = column[i+1]
                   column[i+1].rightleg_up = column[i]
