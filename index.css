@@ -14,12 +14,11 @@
    background-color: #cff;
 }
 .tab>button{
-   padding: 0 12px 4px;
+   padding: 0 6px 2px;
    border: 2px solid #90f;
-   border-radius: 20px;
+   border-radius: 10px;
    background-color: #daf;
-   font-size: 32px;
-   font-weight: bold;
+   font-size: 20px;
 }
 .tab>button[disabled]{
    background-color: #60a;
