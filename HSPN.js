@@ -171,7 +171,7 @@ register.push({
    ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return 'W'.repeat(n+1);
+         if(''+m==='Infinity') return fs('W',n)
          if(m==='0') return '0'
          var datakey=m
          if(!data[datakey]) data[datakey] = []
