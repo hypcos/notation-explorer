@@ -76,6 +76,7 @@ function HSPN_fix(s){while(HSPN_count(s)){s+=')';}return s;}
 function HSPN_trim(s){while(s.at(-1)==')'){s=s.slice(0,-1);}return s;}
 
 function HSPN_islimit(x){
+  if(''+x=='Infinity'){return true;}
   if(x=='0'){return false;}
   if(x.at(-1)=='W'){return true;}
   x=HSPN_trim(x);
@@ -149,12 +150,13 @@ function HSPN_fs(x,n){
 }
 
 function HSPN_display(x){
+  if(''+x=='Infinity'){return 'Limit';}
   return abbreviate(x).replaceAll(/_\d+/g,x=>`<sub>${Number(x.slice(1))}</sub>`)
 }
 
 function HSPN_compare(x,y){
-  if(lt(x,y)){return -1;}
-  if(lt(y,x)){return 1;}
+  if(HSPN_lt(x,y)){return -1;}
+  if(HSPN_lt(y,x)){return 1;}
   return 0;
 }
 
@@ -164,12 +166,12 @@ register.push({
    ,display:HSPN_display
    ,compare:HSPN_compare
    ,able:HSPN_islimit
-   ,fs:(()=>{
+   ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return HSPN_limit(0,n);
+         if(''+m==='Infinity') return HSPN_fs('W',n)
          if(m==='0') return '0'
-         var datakey=HSPN_display(m)
+         var datakey=m
          if(!data[datakey]) data[datakey] = []
          else if(data[datakey][n]!==undefined) return data[datakey][n]
          return data[datakey][n] = HSPN_fs(m,n)
