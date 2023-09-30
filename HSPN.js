@@ -1,3 +1,5 @@
+// Code written by solarzone
+
 const HSPN_count=(x)=>(x.match(/\(/g)||[]).length-(x.match(/\)/g)||[]).length;
 
 function unabbreviate(x){
@@ -169,7 +171,7 @@ register.push({
    ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return HSPN_fs('W',n)
+         if(''+m==='Infinity') return 'W'.repeat(n+1);
          if(m==='0') return '0'
          var datakey=m
          if(!data[datakey]) data[datakey] = []
