@@ -1,4 +1,4 @@
-// Code written by solarzone
+// Written by solarzone (takes inspiration from SSS, parts checked by Eryx)
 
 const HSPN_count=(x)=>(x.match(/\(/g)||[]).length-(x.match(/\)/g)||[]).length;
 
@@ -86,6 +86,52 @@ function HSPN_islimit(x){
   return true;
 }
 
+function HSPN_root(x,l){
+  let b=x.length-1;
+  while(x[b]==')'){b--;}
+  if(x[b]=='0'){return undefined;}
+  let a=b;
+  while(x[a]!='+'&&x[a]!='('){a--;}
+  a++;
+  b++;
+  let i=b
+  let y=x.slice(a,b)
+  if(l==1){
+    while(1){
+      if(i==x.length){return undefined;}
+      let c=HSPN_paren(x,i,false)
+      if(HSPN_lt(x.slice(c-1,i+1),y)){return [i,x.slice(c-1,i+1)];}
+      i++;
+    }
+  }
+  let h=x.length-1;
+  while(x.at(h)!='W'){h--;}
+  let v=x.slice(0,HSPN_root(x,l-1)[0]);
+  let f=HSPN_root(x,l-1);
+  let z=HSPN_count(v);
+  let q=f[0]-f[1].length+2;
+  let w=q;
+  let c=f[1]
+  i=f[0]-f[1].length+1;
+  while(1){
+    if(x[i]=='('){
+      let m=x.slice(0,i);
+      let t=HSPN_count(m);
+      if(t<=z){
+        if(HSPN_lt(HSPN_fix(x.slice(i-1,h)),HSPN_root(x,l-1)[1])){
+          break;
+        }
+        q=i;
+      }
+    }
+    i--;
+  }
+  q--;
+  let n=f[0];
+  while(HSPN_count(x.slice(q,n+1))>0){n++;}
+  return [n,x.slice(q,n+1)];
+}
+
 function HSPN_fs(x,n){
   if(x=='0'){return x;}
   if(x.at(-1)=='W'){
@@ -130,18 +176,7 @@ function HSPN_fs(x,n){
       o=z+HSPN_limit(l,n);
     }
     else{
-      let i=0;
-      let j=1;
-      while(v[j]!='('){j++;}
-      for(let i=0;i<l-1;i++){
-        while(1){
-          j++;
-          if(v[j]!='('){continue;}
-          let k=v.slice(j-1,HSPN_paren(v,j,false)+1);
-          if(HSPN_lt(k,'W'.repeat(l))){break;}
-        }
-      }
-      let r=a+j-2;
+      let r=HSPN_root(y,l)[0]-HSPN_root(y,l)[1].length+1;
       if(r<1){n++;}
       o=x.slice(0,r)+z.slice(r).repeat(n);
     }
@@ -171,9 +206,9 @@ register.push({
    ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return fs('W',n)
+         if(''+m==='Infinity') return fs('W',n);
          if(m==='0') return '0'
-         var datakey=m
+         var datakey=HSPN_display(m)
          if(!data[datakey]) data[datakey] = []
          else if(data[datakey][n]!==undefined) return data[datakey][n]
          return data[datakey][n] = HSPN_fs(m,n)
