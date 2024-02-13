@@ -1,4 +1,4 @@
-// Written by solarzone (with help from Eryx)
+// I'll make this as clear as I can
 
 const HSPN_count=(x)=>(x.match(/\(/g)||[]).length-(x.match(/\)/g)||[]).length;
 
@@ -117,15 +117,11 @@ function HSPN_root(x,l){
     if(x[i]=='('){
       let m=x.slice(0,i);
       let t=HSPN_count(m);
-      let c=HSPN_paren(x,i,false)
       if(t<=z){
-        if(HSPN_lt(HSPN_fix(x.slice(i-1,c+1)),f[1])){
+        if(HSPN_lt(HSPN_fix(x.slice(i-1,h)),HSPN_root(x,l-1)[1])){
           break;
         }
-        if(HSPN_lt(HSPN_fix(x.slice(i-1,c+1)),y)){
-          q=i;
-          if(t<z){z=t;}
-        }
+        q=i;
       }
     }
     i--;
@@ -210,7 +206,7 @@ register.push({
    ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return fs('W',n);
+         if(''+m==='Infinity') return HSPN_fs('W',n);
          if(m==='0') return '0'
          var datakey=HSPN_display(m)
          if(!data[datakey]) data[datakey] = []
