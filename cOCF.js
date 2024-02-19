@@ -314,7 +314,7 @@ register.push({
    ,FS:(()=>{
       var data={}
       return (m,n)=>{
-         if(''+m==='Infinity') return cOCF_fs('p(P(0))',n);
+         if(''+m==='Infinity') return cOCF_fs('P(0)',n);
          if(m==='0') return '0'
          var datakey=m
          if(!data[datakey]) data[datakey] = []
