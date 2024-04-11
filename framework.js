@@ -9,7 +9,7 @@
 ,app = Vue.createApp({
    data:()=>({
       current_tab:0
-      ,FS_shown:register.map(()=>4)
+      ,FS_shown:register.map(()=>3)
       ,extra_FS:register.map(()=>0)
       ,tier:register.map(()=>1)
       ,datasets:register.map(notation=>notation.init())
