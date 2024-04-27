@@ -328,7 +328,7 @@ function cOCF_islimit(a){
 register.push({
    id:'cocf'
    ,name:"cOCF"
-   ,display:cOCF_abbreviate
+   ,display:cOCF_display//abbreviate
    ,compare:cOCF_compare
    ,able:cOCF_islimit
    ,FS:(()=>{
