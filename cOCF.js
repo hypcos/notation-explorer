@@ -168,36 +168,36 @@ function cOCF_root1(x){
 function cOCF_root2(x){
   console.log();
   if(cOCF_root1(x)===undefined){return undefined;}
-  let h=x.length-1;
-  let i=cOCF_trim(x).length+1;
-  let q=cOCF_root1(x)[0]-cOCF_root1(x)[1].length+2; // bad root candidates
-  let w=q;
-  let c=cOCF_root1(x)[1]
-  i=cOCF_root1(x)[0]-cOCF_root1(x)[1].length+1;
-  let v=x.slice(0,cOCF_root1(x)[0]);
-  let z=cOCF_count(v);
+  let y=cOCF_root1(x)[1];
+  let i=cOCF_root1(x)[0];
+  let c=null;
+  let z=null;
+  console.log(x);
   while(1){
-    if(x[i]=='('&&x[i-1]=='p'){
-      //console.log(i,x.slice(0,i));
-      let m=x.slice(0,i);
-      let t=cOCF_count(m);
-      let c=cOCF_paren(x,i)
-      if(t<=z){
-        if(cOCF_lt(cOCF_fix(x.slice(i-1,c)),cOCF_root1(x)[1])){
-          break;
-        }
-        if(cOCF_lt(x.slice(i-1,c+1),'P(0)')){
-          q=i;
-          if(t<z){z=t;}
-        }
+    if(i==x.length){return undefined;}
+    let c=cOCF_paren(x,i);
+    if(lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
+    i++;
+  }
+  i--;
+  console.log(z);
+  while(1){
+    let m=cOCF_paren(x,i);
+    console.log(m);
+    if(x[m-1]=='p'){
+      let c=cOCF_paren(x,i+1);
+      let d=cOCF_terms(x.slice(c+1,i+1));
+      let m=[];
+      for(let j of d){
+        if(lt(j,'P(0)')){m.push(j);}
       }
+      m=m.join('+')
+      z=[i,m];
+      break;
     }
     i--;
   }
-  q--;
-  let n=cOCF_root1(x)[0];
-  while(cOCF_count(x.slice(q,n+1))>0){n++;}
-  return [n,x.slice(q,n+1)];
+  return z;
 }
 
 function cOCF_fs(x,n){
