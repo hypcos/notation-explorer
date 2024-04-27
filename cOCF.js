@@ -7,6 +7,7 @@ function cOCF_abbreviate(x){
 //    if(x=='P(0)'){return 'Ω';}
 //    //...
 //  }
+  if(x=+''=='Infinity'){x='P(0)';}
   x=x.replaceAll('p(0)','1');
   x=x.replaceAll('p(1)','ω');
   x=x.replaceAll(/(1\+)+1/g,p=>((p.length+1)/2).toString());
