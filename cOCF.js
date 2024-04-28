@@ -2,26 +2,6 @@
 
 const cOCF_count=(x)=>(x.match(/\(/g)||[]).length-(x.match(/\)/g)||[]).length;
 
-function cOCF_abbreviate(x){
-//  if(x[0]=='P'){
-//    if(x=='P(0)'){return 'Ω';}
-//    //...
-//  }
-  x=x.replaceAll('p(0)','1');
-  x=x.replaceAll('p(1)','ω');
-  x=x.replaceAll(/(1\+)+1/g,p=>((p.length+1)/2).toString());
-  x=x.replaceAll('p(P(0))','Ω');
-  x=x.replaceAll('p(P(P(0)))','L');
-  x=x.replaceAll('p(P(P(0)+P(0)))','R');
-  x=x.replaceAll('p(P(p(P(P(0))+P(0))))','I');
-  x=x.replaceAll('p(P(P(0))+P(0))','d');
-  x=x.replaceAll('p(P(P(P(0))))','J');
-  x=x.replaceAll('P(0)','c');
-  x=x.replaceAll('P','χ');
-  x=x.replaceAll('p','ψ');
-  return x;
-}
-
 function cOCF_op(x){
   if(cOCF_lt(x,'p(p(0))')){return false;}
   let f=(x[0]=='p')?`p(${cOCF_sua(cOCF_arg(x))[0]})`:'P(0)';
@@ -192,24 +172,24 @@ function cOCF_root2(x){
   let i=cOCF_root1(x)[0];
   let c=null;
   let z=null;
-  console.log(x);
+  //console.log(x);
   while(1){
     if(i==x.length){return undefined;}
     let c=cOCF_paren(x,i);
-    if(lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
+    if(cOCF_lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
     i++;
   }
   i--;
-  console.log(z);
+  //console.log(z);
   while(1){
     let m=cOCF_paren(x,i);
-    console.log(m);
+    //console.log(m);
     if(x[m-1]=='p'){
       let c=cOCF_paren(x,i+1);
       let d=cOCF_terms(x.slice(c+1,i+1));
       let m=[];
       for(let j of d){
-        if(lt(j,'P(0)')){m.push(j);}
+        if(cOCF_lt(j,'P(0)')){m.push(j);}
       }
       m=m.join('+')
       z=[i,m];
@@ -328,7 +308,7 @@ function cOCF_islimit(a){
 register.push({
    id:'cocf'
    ,name:"cOCF"
-   ,display:cOCF_abbreviate
+   ,display:cOCF_display
    ,compare:cOCF_compare
    ,able:cOCF_islimit
    ,FS:(()=>{
