@@ -2,26 +2,6 @@
 
 const cOCF_count=(x)=>(x.match(/\(/g)||[]).length-(x.match(/\)/g)||[]).length;
 
-function cOCF_abbreviate(x){
-//  if(x[0]=='P'){
-//    if(x=='P(0)'){return 'Ω';}
-//    //...
-//  }
-  x=x.replaceAll('p(0)','1');
-  x=x.replaceAll('p(1)','ω');
-  x=x.replaceAll(/(1\+)+1/g,p=>((p.length+1)/2).toString());
-  x=x.replaceAll('p(P(0))','Ω');
-  x=x.replaceAll('p(P(P(0)))','L');
-  x=x.replaceAll('p(P(P(0)+P(0)))','R');
-  x=x.replaceAll('p(P(p(P(P(0))+P(0))))','I');
-  x=x.replaceAll('p(P(P(0))+P(0))','d');
-  x=x.replaceAll('p(P(P(P(0))))','J');
-  x=x.replaceAll('P(0)','c');
-  x=x.replaceAll('P','χ');
-  x=x.replaceAll('p','ψ');
-  return x;
-}
-
 function cOCF_op(x){
   if(cOCF_lt(x,'p(p(0))')){return false;}
   let f=(x[0]=='p')?`p(${cOCF_sua(cOCF_arg(x))[0]})`:'P(0)';
@@ -190,32 +170,40 @@ function cOCF_root2(x){
   if(cOCF_root1(x)===undefined){return undefined;}
   let y=cOCF_root1(x)[1];
   let i=cOCF_root1(x)[0];
+  let k=[i,y];
   let c=null;
   let z=null;
-  console.log(x);
+  //console.log(x);
   while(1){
     if(i==x.length){return undefined;}
-    let c=cOCF_paren(x,i);
-    if(lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
+    c=cOCF_paren(x,i);
+    if(cOCF_lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
     i++;
   }
+  let m=cOCF_paren(x,i);
+  c=cOCF_findall(x.slice(m+1,i));
+  let [p,q]=[c.slice(0,-1),c.at(-1)];
+  let u='0'
+  for(let i of p){
+    if(cOCF_lt(u,i)){u=i;}
+  }
+  let j=cOCF_paren(x,i);
   i--;
-  console.log(z);
   while(1){
-    let m=cOCF_paren(x,i);
-    console.log(m);
+    m=cOCF_paren(x,i);
+    //console.log(m);
     if(x[m-1]=='p'){
-      let c=cOCF_paren(x,i+1);
-      let d=cOCF_terms(x.slice(c+1,i+1));
-      let m=[];
-      for(let j of d){
-        if(lt(j,'P(0)')){m.push(j);}
-      }
-      m=m.join('+')
-      z=[i,m];
+      c=cOCF_paren(x,i+1);
+      z=[i,cOCF_split(x.slice(c+1,i+1),'P(0)')[1]];
       break;
     }
     i--;
+  }
+  if((!cOCF_lt(u,q))&&p){
+    let v=k[0]-k[1].length;
+    let t=x.slice(j-1,v+1);
+    t+='P(0)';v+=4;
+    return [v,x.slice(j-1,v+1)];
   }
   return z;
 }
@@ -228,6 +216,7 @@ function cOCF_fs(x,n){
   if(d=='p(0)'){return x.slice(0,m-2);}
   x=cOCF_trim(x);
   let o=''
+  //console.log(x);
   if(x.at(-3)=='p'){
     x+='))';
     let k=cOCF_paren(x,x.length-1);
@@ -235,15 +224,15 @@ function cOCF_fs(x,n){
     o=x.slice(0,k-1)+('+'+z).repeat(n+1);
   }
   else{
-    if(cOCF_compare(y,'P(0)')!=-1){
+    if(y=='P(0)'||cOCF_lt('P(0)',y)){
       let b=cOCF_trim(x).slice(0,-3);
-      o=b+'p('+'P('.repeat(n)
+      o=b+'p('+'P('.repeat(n);
     }
     else{
       let r=cOCF_root2(y);
       if(r==undefined){
         let b=cOCF_trim(x).slice(0,-3);
-        o=b+'p('+'P('.repeat(n)
+        o=b+'p('+'P('.repeat(n);
       }
       else{
         let b=cOCF_trim(x.slice(r[0]-r[1].length+1,r[0])).slice(0,-3);
@@ -253,6 +242,7 @@ function cOCF_fs(x,n){
   }
   o=cOCF_fix(o).replaceAll('+)',')').replaceAll('(+','(').replaceAll('++','+').replaceAll('()','(0)');
   if(o[0]=='+'){o=o.slice(1);}
+  o=o||'0';
   return o;
 }
 
@@ -313,6 +303,12 @@ function cOCF_split(a,x){
   return [cOCF_add(cOCF_firstTerm(a)[0],cOCF_split(cOCF_firstTerm(a)[1],x)[0]),cOCF_split(cOCF_firstTerm(a)[1],x)[1]];
 }
 
+function cOCF_findall(a){
+  if(a=='0'){return [];}
+  let [p,q]=cOCF_split(a,'P(0)');
+  return cOCF_terms(p).map(cOCF_arg).map(cOCF_findall).flat().filter(x=>x!='0').concat([q].filter(x=>x!='0'));
+}
+
 function cOCF_compare(x,y){
   if(cOCF_lt(x,y)){return -1;}
   if(cOCF_lt(y,x)){return 1;}
@@ -328,7 +324,7 @@ function cOCF_islimit(a){
 register.push({
    id:'cocf'
    ,name:"cOCF"
-   ,display:cOCF_abbreviate
+   ,display:cOCF_display
    ,compare:cOCF_compare
    ,able:cOCF_islimit
    ,FS:(()=>{
