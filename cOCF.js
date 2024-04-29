@@ -181,13 +181,17 @@ function cOCF_root2(x){
     i++;
   }
   let m=cOCF_paren(x,i);
-  c=cOCF_findall(x.slice(m+1,i));
-  let [p,q]=[c.slice(0,-1),c.at(-1)];
+  let s=cOCF_lv('p('+x.slice(m+1,i)+')');
+  //console.log(s)
+  s=s=='0'?'P(0)':`P({cOCF_add(cOCF_sub(s,'P(0)'),'P(0)')})`
+  let [p,q]=cOCF_split(x.slice(m+1,i),s);
+  p=cOCF_findall(p);
   let u='0'
   for(let i of p){
     if(cOCF_lt(u,i)){u=i;}
   }
   let j=cOCF_paren(x,i);
+  //console.log(z)
   i--;
   while(1){
     m=cOCF_paren(x,i);
