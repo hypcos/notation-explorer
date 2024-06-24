@@ -1,6 +1,6 @@
 ;register.push({
    id:'mm'
-   ,name:'mutant matrix'
+   ,name:'Mutant matrix'
    ,display:matrix_display
    ,able:matrix_limit
    ,compare:matrix_compare

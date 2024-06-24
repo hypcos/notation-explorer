@@ -168,36 +168,48 @@ function cOCF_root1(x){
 function cOCF_root2(x){
   console.log();
   if(cOCF_root1(x)===undefined){return undefined;}
-  let h=x.length-1;
-  let i=cOCF_trim(x).length+1;
-  let q=cOCF_root1(x)[0]-cOCF_root1(x)[1].length+2; // bad root candidates
-  let w=q;
-  let c=cOCF_root1(x)[1]
-  i=cOCF_root1(x)[0]-cOCF_root1(x)[1].length+1;
-  let v=x.slice(0,cOCF_root1(x)[0]);
-  let z=cOCF_count(v);
+  let y=cOCF_root1(x)[1];
+  let i=cOCF_root1(x)[0];
+  let k=[i,y];
+  let c=null;
+  let z=null;
+  //console.log(x);
   while(1){
-    if(x[i]=='('&&x[i-1]=='p'){
-      //console.log(i,x.slice(0,i));
-      let m=x.slice(0,i);
-      let t=cOCF_count(m);
-      let c=cOCF_paren(x,i)
-      if(t<=z){
-        if(cOCF_lt(cOCF_fix(x.slice(i-1,c)),cOCF_root1(x)[1])){
-          break;
-        }
-        if(cOCF_lt(x.slice(i-1,c+1),'P(0)')){
-          q=i;
-          if(t<z){z=t;}
-        }
-      }
+    if(i==x.length){return undefined;}
+    c=cOCF_paren(x,i);
+    if(cOCF_lt(x.slice(c-1,i+1),y)){z=[i,x.slice(c-1,i+1)];break;}
+    i++;
+  }
+  let m=cOCF_paren(x,i);
+  let s=cOCF_lv('p('+x.slice(m+1,i)+')');
+  //console.log(s)
+  s=s=='0'?'P(0)':`P({cOCF_add(cOCF_sub(s,'P(0)'),'P(0)')})`
+  let [p,q]=cOCF_split(x.slice(m+1,i),s);
+  p=cOCF_findall(p);
+  let u='0'
+  for(let i of p){
+    if(cOCF_lt(u,i)){u=i;}
+  }
+  let j=cOCF_paren(x,i);
+  //console.log(z)
+  i--;
+  while(1){
+    m=cOCF_paren(x,i);
+    //console.log(m);
+    if(x[m-1]=='p'){
+      c=cOCF_paren(x,i+1);
+      z=[i,cOCF_split(x.slice(c+1,i+1),'P(0)')[1]];
+      break;
     }
     i--;
   }
-  q--;
-  let n=cOCF_root1(x)[0];
-  while(cOCF_count(x.slice(q,n+1))>0){n++;}
-  return [n,x.slice(q,n+1)];
+  if((!cOCF_lt(u,q))&&p){
+    let v=k[0]-k[1].length;
+    let t=x.slice(j-1,v+1);
+    t+='P(0)';v+=4;
+    return [v,x.slice(j-1,v+1)];
+  }
+  return z;
 }
 
 function cOCF_fs(x,n){
@@ -208,6 +220,7 @@ function cOCF_fs(x,n){
   if(d=='p(0)'){return x.slice(0,m-2);}
   x=cOCF_trim(x);
   let o=''
+  //console.log(x);
   if(x.at(-3)=='p'){
     x+='))';
     let k=cOCF_paren(x,x.length-1);
@@ -215,15 +228,15 @@ function cOCF_fs(x,n){
     o=x.slice(0,k-1)+('+'+z).repeat(n+1);
   }
   else{
-    if(cOCF_compare(y,'P(0)')!=-1){
+    if(y=='P(0)'||cOCF_lt('P(0)',y)){
       let b=cOCF_trim(x).slice(0,-3);
-      o=b+'p('+'P('.repeat(n)
+      o=b+'p('+'P('.repeat(n);
     }
     else{
       let r=cOCF_root2(y);
       if(r==undefined){
         let b=cOCF_trim(x).slice(0,-3);
-        o=b+'p('+'P('.repeat(n)
+        o=b+'p('+'P('.repeat(n);
       }
       else{
         let b=cOCF_trim(x.slice(r[0]-r[1].length+1,r[0])).slice(0,-3);
@@ -233,6 +246,7 @@ function cOCF_fs(x,n){
   }
   o=cOCF_fix(o).replaceAll('+)',')').replaceAll('(+','(').replaceAll('++','+').replaceAll('()','(0)');
   if(o[0]=='+'){o=o.slice(1);}
+  o=o||'0';
   return o;
 }
 
@@ -291,6 +305,12 @@ function cOCF_split(a,x){
   if(a=='0'){return ['0','0'];}
   if(cOCF_lt(cOCF_firstTerm(a)[0],x)){return ['0',a];}
   return [cOCF_add(cOCF_firstTerm(a)[0],cOCF_split(cOCF_firstTerm(a)[1],x)[0]),cOCF_split(cOCF_firstTerm(a)[1],x)[1]];
+}
+
+function cOCF_findall(a){
+  if(a=='0'){return [];}
+  let [p,q]=cOCF_split(a,'P(0)');
+  return cOCF_terms(p).map(cOCF_arg).map(cOCF_findall).flat().filter(x=>x!='0').concat([q].filter(x=>x!='0'));
 }
 
 function cOCF_compare(x,y){
