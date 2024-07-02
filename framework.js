@@ -56,6 +56,7 @@ register.forEach((notation,index)=>{
          ,semiable:notation.semiable
          ,compare:notation.compare
          ,FS:notation.FS
+         ,FSalter:notation.FSalter
          ,shownFS:[]
          ,tooltip:false
          ,tooltipX:{}
@@ -63,9 +64,10 @@ register.forEach((notation,index)=>{
       ,methods:{
          recalculate(event){
             if(!this.able(this.expr)) return;
+            var FS = event.shiftKey&&this.FSalter?this.FSalter:this.FS
             var res=[]
             ,nmax=this.$root.FS_shown[index]
-            for(var n=0;n<=nmax;++n) res.push(n+':&nbsp;'+this.display(this.FS(this.expr,n)))
+            for(var n=0;n<=nmax;++n) res.push(n+':&nbsp;'+this.display(FS(this.expr,n)))
             this.shownFS = res
             this.tooltipX = {left:(event.offsetX+15)+'px'}
             this.tooltip = true
@@ -74,12 +76,13 @@ register.forEach((notation,index)=>{
             if(!this.able(this.expr)) return;
             this.tooltip = false
          }
-         ,expand(){
+         ,expand(event){
+            var FS = event.shiftKey&&this.FSalter?this.FSalter:this.FS
             var expand_extra = item=>{
                var working_low = item.low
                for(var i=this.$root.extra_FS[index];i--;){
                   item.subitems.unshift({
-                     expr:FSbounded(this.FS,this.compare,item.expr,working_low)
+                     expr:FSbounded(FS,this.compare,item.expr,working_low)
                      ,low:JSON.parse(JSON.stringify(working_low))
                      ,subitems:[]
                   })
@@ -88,9 +91,9 @@ register.forEach((notation,index)=>{
                if(item.subitems[0]) item.low[0] = item.subitems[0].expr
             }
             ,expand_tier = (tier,item,append)=>{
-               if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(this.FS(item.expr,0),item.low[0])>0)) return;
+               if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(FS(item.expr,0),item.low[0])>0)) return;
                var newitem={
-                  expr:FSbounded(this.FS,this.compare,item.expr,item.low)
+                  expr:FSbounded(FS,this.compare,item.expr,item.low)
                   ,low:JSON.parse(JSON.stringify(item.low))
                   ,subitems:[]
                }
@@ -107,7 +110,7 @@ register.forEach((notation,index)=>{
             extras.forEach(expand_extra)
          }
       }
-      ,template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()" @mousedown="expand()"><span v-html="display(expr)"></span>
+      ,template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()" @mousedown="expand"><span v-html="display(expr)"></span>
             <div class="tooltip" v-if="tooltip" :style="tooltipX" @mousedown.stop>
             <span v-html="display(expr)"></span> fundamental sequence:
             <div v-for="term in shownFS" v-html="term"></div>

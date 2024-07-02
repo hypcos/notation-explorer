@@ -210,9 +210,7 @@
             column.slice(1,column.length-1).forEach(entry=>entry.value=entry.rightleg_up.value+entry.rightleg_up.leftleg_down.value)
          }
       }
-      s=to_sequence(mountain)
-      s.pop()
-      return s
+      return to_sequence(mountain)
    }
    ,medium_magma = (seq,FSterm)=>{
       if(!seq.length) return []
@@ -267,9 +265,7 @@
             column.slice(1,column.length-1).forEach(entry=>entry.value=entry.rightleg_up.value+entry.rightleg_up.leftleg_down.value)
          }
       }
-      s=to_sequence(mountain)
-      s.pop()
-      return s
+      return to_sequence(mountain)
    }
    ,strong_magma = (seq,FSterm)=>{
       if(!seq.length) return []
@@ -328,9 +324,7 @@
             column.slice(1,column.length-1).forEach(entry=>entry.value=entry.rightleg_up.value+entry.rightleg_up.leftleg_down.value)
          }
       }
-      s=to_sequence(mountain)
-      s.pop()
-      return s
+      return to_sequence(mountain)
    }
    register.push({
       id:'omega-y-weak'
@@ -339,6 +333,18 @@
       ,able:Y_limit
       ,compare:sequence_compare
       ,FS:(()=>{
+         var data={}
+         return (seq,FSterm)=>{
+            if(!seq.length) return []
+            var datakey=''+seq
+            if(datakey==='Infinity') return [1,1+FSterm]
+            if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
+            if(!data[datakey]) data[datakey] = []
+            else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
+            return data[datakey][FSterm] = weak_magma(seq,FSterm).slice(0,-1)
+         }
+      })()
+      ,FSalter:(()=>{
          var data={}
          return (seq,FSterm)=>{
             if(!seq.length) return []
@@ -371,6 +377,18 @@
             if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
             if(!data[datakey]) data[datakey] = []
             else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
+            return data[datakey][FSterm] = medium_magma(seq,FSterm).slice(0,-1)
+         }
+      })()
+      ,FSalter:(()=>{
+         var data={}
+         return (seq,FSterm)=>{
+            if(!seq.length) return []
+            var datakey=''+seq
+            if(datakey==='Infinity') return [1,1+FSterm]
+            if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
+            if(!data[datakey]) data[datakey] = []
+            else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
             return data[datakey][FSterm] = medium_magma(seq,FSterm)
          }
       })()
@@ -387,6 +405,18 @@
       ,able:Y_limit
       ,compare:sequence_compare
       ,FS:(()=>{
+         var data={}
+         return (seq,FSterm)=>{
+            if(!seq.length) return []
+            var datakey=''+seq
+            if(datakey==='Infinity') return [1,1+FSterm]
+            if(seq[seq.length-1]===1) return seq.slice(0,seq.length-1)
+            if(!data[datakey]) data[datakey] = []
+            else if(data[datakey][FSterm]!==undefined) return data[datakey][FSterm]
+            return data[datakey][FSterm] = strong_magma(seq,FSterm).slice(0,-1)
+         }
+      })()
+      ,FSalter:(()=>{
          var data={}
          return (seq,FSterm)=>{
             if(!seq.length) return []
