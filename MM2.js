@@ -55,6 +55,11 @@
          mag.push(Array(m).fill(0))
       }
       mag[0][br[1]] = 1
+      if(br[1]<t&&t>0&&llvl==1){
+      	  var h=[n-1,t];
+      	  while(h[0]>br[0])h=[leftlegCol(x,h[0],h[1]),leftlegRow(x,h[0],h[1])+1];
+      	  br[1]=h[1]-1;
+      }
       for(i = br[0] + 1; i < n; i++)
          for(var j = m - 1; j >= 0; j--)
             if(
