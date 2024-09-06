@@ -141,7 +141,7 @@
                working = parent(A,V,working)
                if(extract(magma_checkss,working)>=0){
                   magma_checkss[i][j] = extract(magma_checkss,working)
-                  break entry
+                  continue entry
                }
             }
             magma_checkss[i][j] = (
