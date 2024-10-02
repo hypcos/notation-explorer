@@ -38,6 +38,30 @@
       if(sep.every(column=>!column.length)) return ','.repeat(sep.length)+v
       return mountain_display(sep)+v
    }).join('')+')').join('')
+   ,mountain_display_bms = M=>{
+      M=adddummy(M);
+      //console.log(mountain_display(M));
+      let res='';
+      for(let i=0;i<M.length;i++){
+        res+='(';
+        if(M[i].length){
+          for(let j=0;j<M[i].length;j++){
+            let [v,s]=M[i][j];
+            if(!j&!(s.every(column=>!column.length)&s.length==1)){res+=get_value(M,[i,0]);}
+            if(s.every(column=>!column.length)){
+              if(s.length>1||j>0){res+=','.repeat(s.length);}
+            }
+            else{res+=mountain_display_bms(s);}
+            res+=get_value(M,[i,j]);
+          }
+        }
+        else{
+          res+='0'
+        }
+        res+=')';
+      }
+      return res;
+   }
    ,vertical_compare = (a,b)=>{//each vertical = [separator,separator,...,separator]
       var i=0,c
       while(true){
@@ -90,6 +114,22 @@
          }
       }
       return ref
+   }
+   ,adddummy = (M)=>{
+      N=[]
+      for(let i=0;i<M.length;i++){
+        N.push(M[i]);
+        if(N[i].length==0){continue;}
+        if(mountain_is_one(N[i][0][1])){continue;}
+        N[i]=[[N[i][0][0],[[]]]].concat(N[i]);
+      }
+      return N;
+   }
+   ,get_value = (A,[i,j])=>{
+     let p=A[i][j][0]-1;
+     let cve=column_verticals(A[p]).map(x=>vertical_compare(x,column_verticals(A[i])[j])); // column vertical equality
+     if(!cve.includes(0)){return 1;}
+     return get_value(A,[p,cve.indexOf(0)])+1;
    }
    ,extract = (A,[i,j])=>A[i]?.[j]
    ,expand = (A0,FSterm,shorter=false)=>{
@@ -184,7 +224,7 @@
    register.push({
       id:'t-omega-mn'
       ,name:'Transfinite ω mountain notation'
-      ,display:expr=>''+expr==='Infinity'?'Limit':mountain_display(expr)
+      ,display:expr=>''+expr==='Infinity'?'Limit':`${mountain_display(expr)} <span style="font-size:70%">${mountain_display_bms(expr)}</span>`
       ,able:mountain_is_limit
       ,compare:mountain_compare
       ,FS:(m,FSterm)=>{
