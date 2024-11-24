@@ -139,10 +139,6 @@
             while(working[0]>BRij[0]){
                if(A[working[0]].length<=working[1]) --working[1]
                working = parent(A,V,working)
-               if(extract(magma_checkss,working)>=0){
-                  magma_checkss[i][j] = extract(magma_checkss,working)
-                  continue entry
-               }
             }
             magma_checkss[i][j] = (
                working[0]===BRij[0] && working[1]<=BRij[1] && !vertical_compare(V[working[0]][working[1]-1]??[],V[i][j-1]??[])
