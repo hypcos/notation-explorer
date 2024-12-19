@@ -92,6 +92,14 @@
       return ref
    }
    ,extract = (A,[i,j])=>A[i]?.[j]
+   ,threshold = (A,shorter,low,high)=>{
+      var res,n=0
+      while(true){
+         res = expand(A,n,shorter)
+         if(vertical_compare(vertical_increase(low,res),vertical_increase(high,res))>=0) return n
+         n++
+      }
+   }
    ,expand = (A0,FSterm,shorter=false)=>{
       var datakey = mountain_display(A0)
       if(shorter){
@@ -108,14 +116,16 @@
       var topright_entry = A[rightmost][topmost]
       var topright_separator = topright_entry[1]
 
-      if(mountain_is_limit(topright_separator)){
-         A[rightmost][topmost][1] = expand(topright_separator,FSterm,shorter)
-         return A
-      }
-
       var V0 = A.map(column_verticals)
       var BRij = parent(A,V0,[rightmost,topmost])
       var width = rightmost - BRij[0]
+
+      if(mountain_is_limit(topright_separator)){
+         A[rightmost][topmost][1] = expand(topright_separator,
+            threshold(topright_separator,shorter,V0[BRij[0]][BRij[1]-1]??[],V0[rightmost][topmost-1]??[])+FSterm
+         ,shorter)
+         return A
+      }
 
       var topverticals = V0[BRij[0]].slice(0,BRij[1])
       topverticals.push(V0[rightmost][topmost])
