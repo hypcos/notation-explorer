@@ -5,14 +5,13 @@
    }else{
       if(m2.length===0) return 1
       else{
-         var y1=m1[0].length,y2=m2[0].length
-         if(y1<y2){
-            return sequence_compare(m1.map(col=>col.concat(Array(y2-y1).fill(0))).flat(),m2.flat())
-         }else if(y1>y2){
-            return sequence_compare(m1.flat(),m2.map(col=>col.concat(Array(y1-y2).fill(0))).flat())
-         }else{
-            return sequence_compare(m1.flat(),m2.flat())
-         }
+         var col1=m1[0],col2=m2[0]
+         lenDiff = col1.length-col2.length
+         if(lenDiff>0) col2 = col2.concat(Array(lenDiff).fill(0))
+         else if(lenDiff<0) col1 = col1.concat(Array(-lenDiff).fill(0))
+         var cmp = sequence_compare(col1,col2)
+         if(cmp) return cmp
+         else return matrix_compare(m1.slice(1),m2.slice(1))
       }
    }
 }
