@@ -122,12 +122,7 @@
       A[rightmost] = A[rightmost].concat(A[BRij[0]].slice(BRij[1]))
       return A
    }
-   ,data=new Map()
    ,extend = (A0)=>{
-      var datakey = mountain_display(A0)
-      var mapval = data.get(datakey)
-      if(mapval) return mapval
-
       var rightmost = A0.length-1
       var topmost = A0[rightmost].length-1
       var V0 = A0.map(column_verticals)

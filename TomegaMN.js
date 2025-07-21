@@ -91,7 +91,6 @@
       }
       return ref
    }
-   ,extract = (A,[i,j])=>A[i]?.[j]
    ,threshold = (A,shorter,low,high)=>{
       var res,n=0
       while(true){
@@ -144,7 +143,7 @@
       var magma_checkss = []
       for(var i=BRij[0]+1;i<=rightmost;++i){
          magma_checkss[i] = []
-         entry:for(var j=0;j<A[i].length;++j){
+         for(var j=0;j<A[i].length;++j){
             var working = [i,j]
             while(working[0]>BRij[0]){
                if(A[working[0]].length<=working[1]) --working[1]
