@@ -57,7 +57,7 @@
          while(working = Parent(A0,Eff,working),
             working?.[0]>=0&&
             !(
-               Math.max.apply(0,A0[working[0]].map(term=>term[1]))>=A0[working[0]].length
+               Math.max.apply(0,A0[working[0]].map(term=>term?.[1]??-1))>=A0[working[0]].length
                ? Math.min(working[1],A0[working[0]][working[1]]?.[1]??-1)<K+J
                : (A0[working[0]][working[1]]?.[1]??-1)<K+J
             )
