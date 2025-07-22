@@ -67,26 +67,18 @@
       var width = LNZx-rootx
       var shiftX = ([x,y])=>[x>=rootx?x+width:x,y]
       if(FSterm*width-shorter<0) return A.slice(0,-1)
-      var flag = false
-      if(M){
-         var source_term = A[LNZx].pop().slice()
-         --source_term[1]
-         A[LNZx][T] = source_term
-         working = [LNZx,LNZy]
-         while(working?.[0]>rootx) working = A[working[0]][working[1]]
-         if(working?.[0]===rootx){
-            y=working[1]
-            source_column = A[rootx]
-         }else flag = true
-      }
-      if(flag||!M){
-         var source_column = A[A0[LNZx][LNZy][0]]
+      var source_column = A[A0[LNZx][LNZy][0]]
+      if(!M){
          var y = source_column.slice(0,T).findIndex(term=>term[1]>K+J)
          if(y===-1) y=T
          A[LNZx].pop()
          if(source_column[y]) A[LNZx][T] = source_column[y]
+      }else{
+         var source_term = A[LNZx].pop().slice()
+         --source_term[1]
+         A[LNZx][T] = source_term
       }
-      for(var j=LNZy;j<T;++j) A[LNZx][j] = source_column[y+j-T]
+      for(var j=LNZy;j<T;++j) A[LNZx][j] = source_column[j]
       if(LNZy>=1&&A[LNZx][LNZy-1][0]<A0[LNZx][LNZy][0]) A[LNZx][LNZy-1] = A0[LNZx][LNZy].slice()
       for(var dx=1;dx<=FSterm*width-shorter;++dx){
          A[LNZx+dx] = A[rootx+dx].map(shiftX)
