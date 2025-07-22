@@ -30,11 +30,13 @@
       }
    }
    ,M3is_limit = m=> m.length>0 && m[m.length-1].length>0
-   ,M3display = m=>m.map(column=>'('+column.map(([e1,e2])=>'('+(e1+1)+','+(e2+1)+')').join('')+')').join('')
+   ,M3display = m=>m.map(column=>'('+column.map(term=>{
+      return term? '('+(term[0]+1)+','+(term[1]+1)+')' :'0'
+   }).join('')+')').join('')
    ,column_effrow = column=>{
       var y=column.length-1
       if(y<=0) return 0
-      while(y>0&&column[y-1][0]>=column[y][0]) --y
+      while(y>0&&column[y-1]?.[0]>=column[y]?.[0]) --y
       return y
    }
    ,Parent = (A,Eff,[e1,e2])=>{
@@ -63,9 +65,9 @@
          rootx = working[0]
       }
       var T = Math.max(A0[rootx].length-1,LNZy)
-      var A = A0.map(column=>column.map(([e1,e2])=>[e1,e2]))
+      var A = A0.map(column=>column.map(term=>term?.slice?.()))
       var width = LNZx-rootx
-      var shiftX = ([x,y])=>[x>=rootx?x+width:x,y]
+      var shiftX = term=>term? [term[0]>=rootx?term[0]+width:term[0],term[1]] :term
       if(FSterm*width-shorter<0) return A.slice(0,-1)
       var source_column = A[A0[LNZx][LNZy][0]]
       if(!M){
@@ -79,7 +81,7 @@
          A[LNZx][T] = source_term
       }
       for(var j=LNZy;j<T;++j) A[LNZx][j] = source_column[j]
-      if(LNZy>=1&&A[LNZx][LNZy-1][0]<A0[LNZx][LNZy][0]) A[LNZx][LNZy-1] = A0[LNZx][LNZy].slice()
+      if(LNZy>=1&&A[LNZx][LNZy-1]?.[0]<A0[LNZx][LNZy][0]) A[LNZx][LNZy-1] = A0[LNZx][LNZy].slice()
       for(var dx=1;dx<=FSterm*width-shorter;++dx){
          A[LNZx+dx] = A[rootx+dx].map(shiftX)
       }
