@@ -119,12 +119,6 @@
       for(var i = expr.length-1;i>=len;--i){
          if(expr[i].length<=expr[i][0]*2+1) expr = fullcomp(expr,i)
       }
-      for(i = expr.length-1;i>=len;--i)
-         if(expr[i].length<expr[i][0]*2+1){
-            var delta = expr[i][0]*2+1-expr[i].length
-            expr[i].splice(-expr[i][0],delta)
-            expr[i][0]-=delta
-         }
       return expr
    }
    ,LimitR = n=>n ? [0,0,0].concat(Array(n-1).fill(0).map((x,nn)=>3+nn)) : [0,0]
