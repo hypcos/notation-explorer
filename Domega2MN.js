@@ -191,6 +191,7 @@
                      target_column.push([
                         value+width,
                         !stretch_value[BRindex]||
+                        vertical_compare(V0[x][y],topverticals[BRindex])>=0||
                         mountain_compare(entry[1],top_separators[BRindex])>=0||
                         mountain_compare(entry[1],stretch_threshold[BRindex])<0 ?
                         entry[1] :
@@ -202,6 +203,7 @@
                target_column.push([
                   value + (value>BRij[0] ? width :0),
                   !stretch_value[BRindex]||
+                  vertical_compare(V0[x][y],topverticals[BRindex])>=0||
                   mountain_compare(entry[1],top_separators[BRindex])>=0||
                   mountain_compare(entry[1],stretch_threshold[BRindex])<0 ?
                   entry[1] :
