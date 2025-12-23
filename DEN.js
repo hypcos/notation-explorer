@@ -11,7 +11,20 @@
     * R = [R[1],R[2],...,R[height]]
    */
    var toShort = expr=>expr.slice(1).map(row=>row.slice(1,-row[0]).concat(row[row.length-1]))
-   ,compare = (expr1,expr2)=>matrix_compare(toShort(expr1),toShort(expr2))
+   ,seqseq_compare = (m1,m2)=>{
+      if(m1.length===0){
+         if(m2.length===0) return 0
+         else return -1
+      }else{
+         if(m2.length===0) return 1
+         else{
+            var cmp = sequence_compare(m1[0],m2[0])
+            if(cmp) return cmp
+            else return seqseq_compare(m1.slice(1),m2.slice(1))
+         }
+      }
+   }
+   ,compare = (expr1,expr2)=>seqseq_compare(toShort(expr1),toShort(expr2))
    ,display = expr=>''+expr==='Infinity'?'Limit':expr.slice(1).map(row=>'('+row.slice(1).join(',')+')'+row[0]).join('')+';'+expr[0].join(',')
    ,isNonzero = expr=> expr.length>1
    ,pleasantUntil = (rows,t)=>{
