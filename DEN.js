@@ -121,7 +121,6 @@
       var active = raw[raw.length-1]
       if(!active[1+active[0]]) return cut(raw)
       var flag = pleasantUntil(raw.slice(active[1+active[0]],-1),active)
-      ,len = raw.length-1
       var expr = raw
       if(~flag){
          expr = copy(expr,flag)
@@ -129,7 +128,7 @@
          for(var n=1;n<=FSterm;++n) expr = extend(expr)
          expr = longer ? copy(expr,1) : cut(expr)
       }
-      for(var i = expr.length-1;i>=len;--i){
+      for(var i = raw.length-1;i<expr.length;++i){
          if(expr[i].length<=expr[i][0]*2+1) expr = fullcomp(expr,i)
       }
       return expr
