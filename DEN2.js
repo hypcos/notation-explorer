@@ -90,7 +90,8 @@
             }
             var c = seq[nomove-1][0]+offset
             ,rowc = expr[c-1]
-            if(rowc[seq[nomove-1][1]+rowc[0]-1][0]<=active[active.length-1][0]) targetrow[j][1] = true
+            ,b = rowc[seq[nomove-1][1]][0]
+            if(rowc[seq[nomove-1][1]+rowc[0]-1]?.[0]<=active[active.length-1][0] && (active.slice(1).find(x=>x[0]===b))?.[1]) targetrow[j][1] = true
          }
       }
       return expr
