@@ -105,7 +105,7 @@
          var T = already[t-1]
          if(!T) continue
          var q = T.length
-         var entries = expr[r].slice(1).concat(T.map(x=>[x])).concat(Array(q).fill(0).map((x,uu)=>[n+1+uu,true]))
+         var entries = expr[r].slice(1).map(x=>x.slice()).concat(T.map(x=>[x])).concat(Array(q).fill(0).map((x,uu)=>[n+1+uu,true]))
          entries.sort((x,y)=>y[0]-x[0])
          expr[r] = [expr[r][0]+q].concat(entries)
       }
@@ -117,14 +117,14 @@
       ,lr = raw[r].length<raw[r][0]*2+1 ? raw[r][0] : raw[r][0]+1
       ,cr = raw[r].length<raw[r][0]*2+1 ? raw[r].slice(1,-raw[r][0]).concat(raw[r].slice(1+raw[r][0])) : raw[r].slice(1)
       for(var qq=0;qq<q;++qq){
-         var entries = cr.concat(T.slice(0,1+qq).map(x=>[x])).concat(Array(qq).fill(0).map((x,uu)=>[raw[r][1][0]+1+uu]))
+         var entries = cr.map(x=>x.slice()).concat(T.slice(0,1+qq).map(x=>[x])).concat(Array(qq).fill(0).map((x,uu)=>[raw[r][1][0]+1+uu]))
          entries.sort((x,y)=>y[0]-x[0])
          expr[r+qq] = [lr+qq].concat(entries)
       }
-      entries = raw[r].slice(1).concat(T.map(x=>[x])).concat(Array(q).fill(0).map((x,uu)=>[raw[r][1][0]+1+uu]))
+      entries = raw[r].slice(1).map(x=>x.slice()).concat(T.map(x=>[x])).concat(Array(q).fill(0).map((x,uu)=>[raw[r][1][0]+1+uu]))
       entries.sort((x,y)=>y[0]-x[0])
       expr[r+q] = [raw[r][0]+q].concat(entries)
-      for(qq=1;qq<=q;++qq) for(var uu=2;uu<1+qq;++uu) expr[r+qq][uu][1] = true
+      for(qq=1;qq<=q;++qq) for(var uu=2;uu<=1+qq;++uu) expr[r+qq][uu][1] = true
       var m = (x,idx)=>{
          if(!idx) return x
          var xx = x.slice()
