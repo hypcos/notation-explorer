@@ -79,7 +79,7 @@
          for(j=1;j<row.length;++j){
             if(!row[j][1]) continue
             seq = seqFrom(raw,i,j)
-            var nomove = seq.slice(0,-1).findIndex(x=>x[0]<active[1+active[0]][0])
+            var nomove = seq.findIndex(x=>x[0]<active[1+active[0]][0])
             if(nomove===-1){
                targetrow[j][1] = true
                continue
