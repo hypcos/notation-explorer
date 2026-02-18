@@ -238,22 +238,4 @@
             }
         });
     }
-    
-    
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = {
-            expand: expand,
-            vertical_compare: vertical_compare,
-            get_vertical: get_vertical,
-            parent: parent
-        };
-    } else if (typeof window !== 'undefined') {
-        window.MM3 = {
-            expand: expand,
-            vertical_compare: vertical_compare,
-            get_vertical: get_vertical,
-            parent: parent
-        };
-    }
-    
 })();
