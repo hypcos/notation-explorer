@@ -1,5 +1,5 @@
 ;(()=>{
-   var entry_compare = (a,b)=>{//each entry = [value,separator] where separator is mountain
+      var entry_compare = (a,b)=>{//each entry = [value,separator] where separator is mountain
       if(a[0]<b[0]) return -1
       if(a[0]>b[0]) return 1
       return mountain_compare(a[1],b[1])
@@ -116,10 +116,10 @@
          ){
             if(vertical_compare(alpha,working_vertical)>0){
                var i = find_index_below_row(V0[BRij[0]],working_vertical)
-               while(vertical_compare(alpha,V0[BRij[0]][i]??[])>0){
-                  ++i
+               while(vertical_compare(alpha,V0[BRij[0]][i-1]??[])>0){
                   A[rightmost].push([topright_value,A[BRij[0]][i][1]])
                   working_vertical = vertical_increase(working_vertical,A[BRij[0]][i][1])
+                  ++i
                }
             }
             while(vertical_compare(vertical_increase(alpha,J),vertical_increase(working_vertical,J))) J = J.concat([[]])
@@ -132,10 +132,10 @@
          working_vertical = V0[rightmost][topmost-1]??[]
          if(vertical_compare(alpha,working_vertical)>0){
             i = find_index_below_row(V0[BRij[0]],working_vertical)
-            while(vertical_compare(alpha,V0[BRij[0]][i]??[])>0){
-               ++i
+            while(vertical_compare(alpha,V0[BRij[0]][i-1]??[])>0){
                A[rightmost].push([topright_value,A[BRij[0]][i][1]])
                working_vertical = vertical_increase(working_vertical,A[BRij[0]][i][1])
+               ++i
             }
          }
 
