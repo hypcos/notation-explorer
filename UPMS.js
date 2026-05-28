@@ -1,15 +1,13 @@
 ;(() => {
   // Unupgrading Projection Matrix System support for hypcos/notation-explorer.
-  // Matrix representation: columns are arrays, top-to-bottom, 0-based internally.
-  // Example: (0,0)(1,1)(2,1) is represented as [[0,0],[1,1],[2,1]].
+  // Optimized version: fewer temporary matrices, array-backed caches, numeric VR table.
 
   const STRICT_BASE_COLUMN = true;
   // true follows the prompt literally: for z=A(i,k), use the first k+1 entries
-  // of column i, and add 1 to the first k entries.  Set to false only if you
+  // of column i, and add 1 to the first k entries. Set to false only if you
   // need to mimic an older standalone demo that used first k entries instead.
 
   const isPseudoInfinity = expr => '' + expr === 'Infinity';
-  const keyOf = (col, row) => col + ',' + row;
   const cloneColumn = col => col.slice();
   const cloneMatrix = matrix => matrix.map(cloneColumn);
 
@@ -31,7 +29,7 @@
     });
 
     // Notation Explorer displays columns directly, so remove rows that are
-    // globally trailing zeroes.  This is the usual omitted-zero convention.
+    // globally trailing zeroes. This preserves the omitted-zero convention.
     while (rows > 1 && result.every(col => col[rows - 1] === 0)) {
       result.forEach(col => col.pop());
       rows--;
@@ -58,7 +56,8 @@
     for (let r = 0; r < rows; r++) {
       if (m[0][r] !== 0) return false;
     }
-    for (const col of m) {
+    for (let c = 0; c < m.length; c++) {
+      const col = m[c];
       for (let r = 1; r < rows; r++) {
         if (col[r] > col[r - 1]) return false;
       }
@@ -94,33 +93,6 @@
     return 0;
   };
 
-  const matrixLexCompare = (m1, m2) => {
-    // Raw matrix lexicographic comparison used inside UPMS verification roots.
-    const cols = Math.min(m1.length, m2.length);
-    for (let c = 0; c < cols; c++) {
-      const rows = Math.min(m1[c].length, m2[c].length);
-      for (let r = 0; r < rows; r++) {
-        if (m1[c][r] < m2[c][r]) return -1;
-        if (m1[c][r] > m2[c][r]) return 1;
-      }
-      if (m1[c].length < m2[c].length) return -1;
-      if (m1[c].length > m2[c].length) return 1;
-    }
-    if (m1.length < m2.length) return -1;
-    if (m1.length > m2.length) return 1;
-    return 0;
-  };
-
-  const columnPrefixCompare = (column, reference) => {
-    for (let r = 0; r < reference.length; r++) {
-      const a = r < column.length ? column[r] : 0;
-      const b = reference[r];
-      if (a < b) return -1;
-      if (a > b) return 1;
-    }
-    return 0;
-  };
-
   const matrixDisplay = expr => {
     if (isPseudoInfinity(expr)) return 'Limit';
     return standardizeMatrix(expr).map(col => '(' + col.join(',') + ')').join('');
@@ -130,54 +102,60 @@
     const m = standardizeMatrix(matrix);
     const colCount = m.length;
     const rowCount = colCount === 0 ? 0 : m[0].length;
-    const parentCache = new Map();
-    const ancestorCache = new Map();
 
-    const getZeroParent = colIndex => colIndex > 0 ? colIndex - 1 : null;
+    // parentCache[b][col] is -2 when unknown, -1 when no parent, otherwise a column index.
+    const parentCache = Array.from({ length: rowCount + 1 }, () => Array(colCount).fill(-2));
+    // ancestorCache[a][col] is { list: number[], mask: Uint8Array }.
+    const ancestorCache = Array.from({ length: rowCount + 1 }, () => Array(colCount).fill(null));
 
-    const getBParent = (colIndex, b) => {
-      const cacheKey = colIndex + ',' + b;
-      if (parentCache.has(cacheKey)) return parentCache.get(cacheKey);
-
-      const row = b - 1;
-      if (row < 0 || row >= rowCount) {
-        parentCache.set(cacheKey, null);
-        return null;
-      }
-
-      const value = m[colIndex][row];
-      const ancestors = getAAncestors(colIndex, b - 1);
-      let best = null;
-      for (const candidate of ancestors) {
-        if (candidate >= colIndex) continue;
-        if (m[candidate][row] < value && (best === null || candidate > best)) {
-          best = candidate;
-        }
-      }
-      parentCache.set(cacheKey, best);
-      return best;
-    };
+    const getZeroParent = colIndex => colIndex > 0 ? colIndex - 1 : -1;
 
     const getAAncestors = (colIndex, a) => {
-      const cacheKey = colIndex + ',' + a;
-      if (ancestorCache.has(cacheKey)) return ancestorCache.get(cacheKey);
+      if (a < 0 || a > rowCount || colIndex < 0 || colIndex >= colCount) {
+        return { list: [], mask: new Uint8Array(colCount) };
+      }
+      const cached = ancestorCache[a][colIndex];
+      if (cached !== null) return cached;
 
-      const ancestors = new Set([colIndex]);
-      let changed = true;
+      const list = [];
+      const mask = new Uint8Array(colCount);
+      let current = colIndex;
       let guard = 0;
-      while (changed && guard++ <= colCount + 2) {
-        changed = false;
-        const current = Array.from(ancestors);
-        for (const col of current) {
-          const parent = a === 0 ? getZeroParent(col) : getBParent(col, a);
-          if (parent !== null && !ancestors.has(parent)) {
-            ancestors.add(parent);
-            changed = true;
-          }
+
+      while (current !== -1 && !mask[current] && guard++ <= colCount + 2) {
+        list.push(current);
+        mask[current] = 1;
+        current = a === 0 ? getZeroParent(current) : getBParent(current, a);
+      }
+
+      const result = { list, mask };
+      ancestorCache[a][colIndex] = result;
+      return result;
+    };
+
+    const getBParent = (colIndex, b) => {
+      if (b < 1 || b > rowCount || colIndex < 0 || colIndex >= colCount) return -1;
+      const cached = parentCache[b][colIndex];
+      if (cached !== -2) return cached;
+
+      const row = b - 1;
+      const value = m[colIndex][row];
+      const ancestors = getAAncestors(colIndex, b - 1).list;
+      let best = -1;
+
+      // Ancestor lists are generated from the current column leftward along the
+      // parent chain, so the first valid candidate is the rightmost one.
+      for (let i = 0; i < ancestors.length; i++) {
+        const candidate = ancestors[i];
+        if (candidate >= colIndex) continue;
+        if (m[candidate][row] < value) {
+          best = candidate;
+          break;
         }
       }
-      ancestorCache.set(cacheKey, ancestors);
-      return ancestors;
+
+      parentCache[b][colIndex] = best;
+      return best;
     };
 
     return { m, colCount, rowCount, getBParent, getAAncestors };
@@ -185,40 +163,47 @@
 
   const lastColumnIsZero = matrix => {
     if (matrix.length === 0) return true;
-    return matrix[matrix.length - 1].every(value => value === 0);
+    const last = matrix[matrix.length - 1];
+    for (let r = 0; r < last.length; r++) {
+      if (last[r] !== 0) return false;
+    }
+    return true;
   };
 
   const findLastNonZeroRowLabel = matrix => {
-    if (matrix.length === 0) return null;
+    if (matrix.length === 0) return -1;
     const last = matrix[matrix.length - 1];
     for (let r = last.length - 1; r >= 0; r--) {
       if (last[r] !== 0) return r + 1; // 1-based row label
     }
-    return null;
+    return -1;
   };
 
   const findBadRoot = ctx => {
     const lastCol = ctx.colCount - 1;
     const t = findLastNonZeroRowLabel(ctx.m);
-    if (t === null) return null;
+    if (t === -1) return null;
     const rootCol = ctx.getBParent(lastCol, t);
-    if (rootCol === null) return null;
+    if (rootCol === -1) return null;
     return { rootCol, t };
   };
 
   const computeDelta = (ctx, rootCol, t) => {
     const lastCol = ctx.colCount - 1;
-    const delta = [];
+    const delta = new Array(ctx.rowCount);
     for (let r = 0; r < ctx.rowCount; r++) {
-      delta.push(r >= t - 1 ? 0 : ctx.m[lastCol][r] - ctx.m[rootCol][r]);
+      delta[r] = r >= t - 1 ? 0 : ctx.m[lastCol][r] - ctx.m[rootCol][r];
     }
     return delta;
   };
 
   const maxEntry = matrix => {
     let max = 0;
-    for (const col of matrix) {
-      for (const value of col) max = Math.max(max, value);
+    for (let c = 0; c < matrix.length; c++) {
+      const col = matrix[c];
+      for (let r = 0; r < col.length; r++) {
+        if (col[r] > max) max = col[r];
+      }
     }
     return max;
   };
@@ -227,16 +212,75 @@
     const m = ctx.m;
     const alpha = ctx.colCount - 1; // 0-based last-column index
     const y = rootCol;             // 0-based bad-root column index
-    const vr = new Map();
+    const width = ctx.colCount;
+    const height = ctx.rowCount;
+    const maxTwice = maxEntry(m) * 2;
 
+    // -1 = undefined / no verification root, 0/1 = computed root value.
+    const vr = new Int8Array(width * height);
+    vr.fill(-1);
+    const vrIndex = (col, row) => col * height + row;
     const inBadPart = (col, row) => col >= y && col < alpha && row < t - 1;
-    const getVR = (col, row) => inBadPart(col, row) ? vr.get(keyOf(col, row)) : undefined;
-    const setVR = (col, row, value) => vr.set(keyOf(col, row), value);
+    const getVR = (col, row) => inBadPart(col, row) ? vr[vrIndex(col, row)] : -1;
+    const setVR = (col, row, value) => { vr[vrIndex(col, row)] = value; };
+
+    const baseValue = (col, k, r) => {
+      if (STRICT_BASE_COLUMN) return m[col][r] + (r < k ? 1 : 0);
+      return m[col][r] + (r < k - 1 ? 1 : 0);
+    };
+
+    const columnLessThanBase = (candidate, col, k) => {
+      const limit = STRICT_BASE_COLUMN ? k + 1 : k;
+      for (let r = 0; r < limit; r++) {
+        const a = r < height ? m[candidate][r] : 0;
+        const b = baseValue(col, k, r);
+        if (a < b) return true;
+        if (a > b) return false;
+      }
+      return false;
+    };
+
+    const transformedXValue = (sourceCol, row, iCol, k) => {
+      let value = m[sourceCol][row];
+      if (row < k - 1 && getVR(sourceCol, row) === 1) {
+        value += maxTwice - m[iCol][row];
+      }
+      return value;
+    };
+
+    const transformedYValue = (sourceCol, row, jCol, k) => {
+      let value = m[sourceCol][row];
+      if (row < k - 1) {
+        const colIsJ = sourceCol === jCol;
+        const containsJ = ctx.getAAncestors(sourceCol, row + 1).mask[jCol] === 1;
+        if (colIsJ || containsJ) value += maxTwice - m[jCol][row];
+      }
+      return value;
+    };
+
+    const compareTransformedParts = (xStart, xEnd, yStart, jCol, iCol, k) => {
+      const xLen = xEnd - xStart + 1;
+      const yLen = alpha - yStart + 1;
+      const commonCols = Math.min(xLen, yLen);
+
+      for (let local = 0; local < commonCols; local++) {
+        const xCol = xStart + local;
+        const yCol = yStart + local;
+        for (let row = 0; row < height; row++) {
+          const xv = transformedXValue(xCol, row, iCol, k);
+          const yv = transformedYValue(yCol, row, jCol, k);
+          if (xv < yv) return -1;
+          if (xv > yv) return 1;
+        }
+      }
+      if (xLen < yLen) return -1;
+      if (xLen > yLen) return 1;
+      return 0;
+    };
 
     for (let row = 0; row < t - 1; row++) {
+      const k = row + 1; // 1-based row label of z=A(i,k)
       for (let col = y; col < alpha; col++) {
-        const k = row + 1; // 1-based row label of z=A(i,k)
-
         if (col === y || row === 0) {
           setVR(col, row, 1);
           continue;
@@ -244,7 +288,8 @@
 
         const kAncestors = ctx.getAAncestors(col, k);
         let ancestorHasVR0 = false;
-        for (const ancCol of kAncestors) {
+        for (let a = 0; a < kAncestors.list.length; a++) {
+          const ancCol = kAncestors.list[a];
           if (getVR(ancCol, row) === 0) {
             ancestorHasVR0 = true;
             break;
@@ -252,7 +297,7 @@
         }
 
         const kParent = ctx.getBParent(col, k);
-        if (!kAncestors.has(y) || ancestorHasVR0 || kParent === null) {
+        if (kAncestors.mask[y] !== 1 || ancestorHasVR0 || kParent === -1) {
           setVR(col, row, 0);
           continue;
         }
@@ -287,82 +332,46 @@
           continue;
         }
 
-        // Baseline column.  In strict mode this has rows 1..k+1 and adds 1
-        // to rows 1..k.  Non-strict mode mimics the old standalone demo.
-        const baseCol = [];
-        if (STRICT_BASE_COLUMN) {
-          for (let r = 0; r <= k; r++) baseCol.push(m[col][r] + (r < k ? 1 : 0));
-        } else {
-          for (let r = 0; r <= row; r++) baseCol.push(m[col][r] + (r < row ? 1 : 0));
-        }
-
-        let u = null; // 0-based index of the least column u>i satisfying A_u < baseCol
+        let u = -1; // 0-based least column u>i satisfying A_u < baseCol
         for (let candidate = col + 1; candidate <= alpha; candidate++) {
-          if (columnPrefixCompare(m[candidate], baseCol) < 0) {
+          if (columnLessThanBase(candidate, col, k)) {
             u = candidate;
             break;
           }
         }
 
-        if (u === null) {
+        if (u === -1) {
           setVR(col, row, 1);
           continue;
         }
 
-        const XStart = col;
-        const XEnd = u - 1;
-        const X = m.slice(XStart, XEnd + 1).map(cloneColumn);
-
         const Ayk = m[y][row];
-        const alphaAncestors = ctx.getAAncestors(alpha, k);
-        let j = null;
-        for (const ancCol of alphaAncestors) {
+        const alphaAncestors = ctx.getAAncestors(alpha, k).list;
+        let j = -1;
+        for (let a = 0; a < alphaAncestors.length; a++) {
+          const ancCol = alphaAncestors[a];
           if (m[ancCol][row] === Ayk + 1) {
             j = ancCol;
             break;
           }
         }
-        if (j === null) j = alpha;
+        if (j === -1) j = alpha;
 
-        const YStart = j;
-        const Y = m.slice(YStart, alpha + 1).map(cloneColumn);
-        const x = maxEntry(m) * 2;
-
-        const Xc = X.map(cloneColumn);
-        for (let s = 1; s <= k - 1; s++) {
-          const sRow = s - 1;
-          const deltaX = x - m[col][sRow];
-          for (let localCol = 0; localCol < Xc.length; localCol++) {
-            const originalCol = XStart + localCol;
-            if (getVR(originalCol, sRow) === 1) Xc[localCol][sRow] += deltaX;
-          }
-        }
-
-        const Yc = Y.map(cloneColumn);
-        for (let s = 1; s <= k - 1; s++) {
-          const sRow = s - 1;
-          const deltaY = x - m[j][sRow];
-          for (let localCol = 0; localCol < Yc.length; localCol++) {
-            const originalCol = YStart + localCol;
-            const isJColumn = originalCol === j;
-            const sAncestors = ctx.getAAncestors(originalCol, s);
-            if (isJColumn || sAncestors.has(j)) Yc[localCol][sRow] += deltaY;
-          }
-        }
-
-        setVR(col, row, matrixLexCompare(Xc, Yc) < 0 ? 0 : 1);
+        const cmp = compareTransformedParts(col, u - 1, j, j, col, k);
+        setVR(col, row, cmp < 0 ? 0 : 1);
       }
     }
-    return vr;
+
+    return { data: vr, index: vrIndex, height };
   };
 
   const generateBh = (ctx, B, delta, t, h, rootCol, vr) => {
     return B.map((col, localCol) => {
       const originalCol = rootCol + localCol;
-      const next = [];
+      const next = new Array(ctx.rowCount);
       for (let r = 0; r < ctx.rowCount; r++) {
-        const hasVerificationRoot = r < t - 1 && vr.get(keyOf(originalCol, r)) === 1;
-        next.push(col[r] + h * delta[r] * (hasVerificationRoot ? 1 : 0));
+        const hasVerificationRoot = r < t - 1 && vr.data[vr.index(originalCol, r)] === 1;
+        next[r] = col[r] + h * delta[r] * (hasVerificationRoot ? 1 : 0);
       }
       return next;
     });
@@ -389,7 +398,7 @@
     const result = [...G, ...B.map(cloneColumn)];
     for (let h = 1; h <= n; h++) {
       const Bh = generateBh(ctx, B, delta, t, h, rootCol, vr);
-      for (const col of Bh) result.push(col);
+      for (let i = 0; i < Bh.length; i++) result.push(Bh[i]);
     }
     return standardizeMatrix(result);
   };
