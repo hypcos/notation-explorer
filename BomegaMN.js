@@ -207,21 +207,24 @@
       if(row<0) return {col:pos.col,row:0}
       return left_leg(pos.col.entries[row])
    }
-   ,find_righttop = ctx=>{
+   ,find_righttop_trace = ctx=>{
       var mctx=ctx.rootMctx
-      if(!mctx.columns.length) return null
+      if(!mctx.columns.length) return {righttop:null,limits:[]}
       var col=mctx.columns[mctx.columns.length-1]
-      if(!col.entries.length) return null
+      if(!col.entries.length) return {righttop:null,limits:[]}
       var loc=col.entries[col.entries.length-1]
+      var limits=[]
       while(mountain_is_limit(loc.entry[1])){
+         limits.push(loc)
          var smctx=loc.sepRef.mctx
          if(!smctx.columns.length) break
          var scol=smctx.columns[smctx.columns.length-1]
          if(!scol.entries.length) break
          loc=scol.entries[scol.entries.length-1]
       }
-      return loc
+      return {righttop:loc,limits:limits}
    }
+   ,find_righttop = ctx=>find_righttop_trace(ctx).righttop
    ,column_chain = (rootCol,rightCol)=>{
       var res=[], c=rightCol
       while(c){
@@ -318,7 +321,40 @@
       if(reduced.length>0) decrease(A,righttopPathKey,rootPathKey,rootRow,reduced,value)
       return A
    }
-   ,expand = (A0,FSterm,shorter=false)=>{
+   // BωMN version of the TωMN threshold.  Unlike TωMN, the candidate
+   // separator A[n] cannot be expanded as a standalone matrix: its columns may
+   // branch out of the separator and refer to columns in the ambient matrix.
+   // Therefore the threshold is computed from the ambient expression itself:
+   // for the outermost limit separator on the right-top trace, expand the whole
+   // ambient matrix by n raw rounds, extract that same separator, and test
+   //       low + sep[n] >= high + sep[n].
+   // The returned value is used only as an initial FS-index offset:
+   // expand(A,n) = expand_core(A,n+threshold(A),...), so the actual
+   // A[large n with offset] expansion is not otherwise modified.
+   ,threshold = (A0,shorter)=>{
+      var ctx=build_context(A0)
+      var trace=find_righttop_trace(ctx)
+      if(!trace.limits.length) return 0
+      var loc=trace.limits[0]
+      var leg=left_leg(loc)
+      var low=row_ref(leg.col,leg.row)
+      var high=row_ref(loc.col,loc.index) // row directly below the limit-separator element
+      var n=0,res,resCtx,resLoc,sep
+      while(true){
+         res=expand_core(A0,n,shorter)
+         resCtx=build_context(res)
+         resLoc=resCtx.entryMap.get(loc.pathKey)
+         if(!resLoc) return n
+         sep=resLoc.sepRef
+         if(vertical_compare(
+            vertical_increase(row_value(low),sep),
+            vertical_increase(row_value(high),sep)
+         )>=0) return n
+         ++n
+      }
+   }
+   ,expand = (A0,FSterm,shorter=false)=>expand_core(A0,FSterm+threshold(A0,shorter),shorter)
+   ,expand_core = (A0,FSterm,shorter=false)=>{
       var A=clone(A0)
       var finalDeletePathKey=null
       var initCtx=build_context(A)
